@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "folio_access",
+      "credentials": [
+        {
+          "accessKey": "folio_access",
+          "secretKey": "folio_secret_key"
+        }
+      ],
+      "actions": [
+        "Read",
+        "Write",
+        "List",
+        "Tagging",
+        "Admin"
+      ]
+    }
+  ]
+}
