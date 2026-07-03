@@ -23,6 +23,39 @@ export default function OrderFormView() {
 
   const [isSaving, setIsSaving] = useState(false);
 
+  // Prevent any key entry that is not a digit (for integer inputs like guest count, qty)
+  const restrictToDigitsOnly = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowed = [
+      "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter", "Home", "End"
+    ];
+    if (allowed.includes(e.key) || ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x", "z"].includes(e.key.toLowerCase()))) {
+      return;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  // Prevent any key entry that is not a digit or a single decimal point (for prices, percentages)
+  const restrictToDecimalsOnly = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowed = [
+      "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter", "Home", "End"
+    ];
+    if (allowed.includes(e.key) || ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x", "z"].includes(e.key.toLowerCase()))) {
+      return;
+    }
+    if (e.key === ".") {
+      const val = e.currentTarget.value;
+      if (val.includes(".")) {
+        e.preventDefault();
+      }
+      return;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -344,8 +377,10 @@ export default function OrderFormView() {
               <input
                 className="form-input"
                 type="tel"
+                pattern="[0-9]*"
+                inputMode="numeric"
                 value={orderForm.client_phone}
-                onChange={(e) => setOrderForm({ ...orderForm, client_phone: e.target.value })}
+                onChange={(e) => setOrderForm({ ...orderForm, client_phone: e.target.value.replace(/\D/g, "") })}
               />
             </div>
 
@@ -423,9 +458,12 @@ export default function OrderFormView() {
               <input
                 className="form-input"
                 type="number"
+                min="0"
+                onKeyDown={restrictToDigitsOnly}
                 value={orderForm.guest_count}
                 onChange={(e) => {
-                  const count = parseInt(e.target.value, 10) || 0;
+                  const clean = e.target.value.replace(/\D/g, "");
+                  const count = parseInt(clean, 10) || 0;
                   setOrderForm((prev: any) => {
                     const updatedSessions = (prev.sessions || []).map((s: any) => {
                       if (s.sync_guest_count !== false) {
@@ -467,6 +505,8 @@ export default function OrderFormView() {
                   <input
                     className="form-input charge-amount-input"
                     type="number"
+                    min="0"
+                    onKeyDown={restrictToDecimalsOnly}
                     value={charge.amount}
                     onChange={(e) => handleUpdateChargeLine(idx, charge.label, parseFloat(e.target.value) || 0)}
                   />
@@ -519,6 +559,7 @@ export default function OrderFormView() {
                     min="0"
                     max="100"
                     step="any"
+                    onKeyDown={restrictToDecimalsOnly}
                     className="form-input"
                     value={orderForm.discount_percent || 0}
                     onChange={(e) => {
@@ -622,6 +663,8 @@ export default function OrderFormView() {
                   <input
                     className="form-input milestone-amount-input"
                     type="number"
+                    min="0"
+                    onKeyDown={restrictToDecimalsOnly}
                     value={orderForm.booking_amount === 0 ? "" : orderForm.booking_amount}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -665,6 +708,8 @@ export default function OrderFormView() {
                   <input
                     className="form-input milestone-amount-input"
                     type="number"
+                    min="0"
+                    onKeyDown={restrictToDecimalsOnly}
                     value={orderForm.second_amount === 0 ? "" : orderForm.second_amount}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -708,6 +753,8 @@ export default function OrderFormView() {
                   <input
                     className="form-input milestone-amount-input"
                     type="number"
+                    min="0"
+                    onKeyDown={restrictToDecimalsOnly}
                     value={orderForm.final_amount === 0 ? "" : orderForm.final_amount}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -883,9 +930,11 @@ export default function OrderFormView() {
                             type="number"
                             className="form-input"
                             style={{ flexGrow: 1 }}
+                            min="0"
+                            onKeyDown={restrictToDigitsOnly}
                             value={session.guest_count}
                             disabled={session.sync_guest_count !== false}
-                            onChange={(e) => handleUpdateSessionField(session.id, "guest_count", parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => handleUpdateSessionField(session.id, "guest_count", parseInt(e.target.value.replace(/\D/g, ""), 10) || 0)}
                           />
                           <button
                             type="button"
@@ -923,6 +972,8 @@ export default function OrderFormView() {
                           <input
                             type="number"
                             className="form-input"
+                            min="0"
+                            onKeyDown={restrictToDecimalsOnly}
                             value={session.package_price || 0}
                             onChange={(e) => handleUpdateSessionField(session.id, "package_price", parseFloat(e.target.value) || 0)}
                           />
@@ -1018,8 +1069,10 @@ export default function OrderFormView() {
                                     <input
                                       type="number"
                                       className="form-input qty-input"
+                                      min="0"
+                                      onKeyDown={restrictToDigitsOnly}
                                       value={formIt.quantity}
-                                      onChange={(e) => handleUpdateSessionItemQty(session.id, formIt.itemId, parseInt(e.target.value, 10) || 0)}
+                                      onChange={(e) => handleUpdateSessionItemQty(session.id, formIt.itemId, parseInt(e.target.value.replace(/\D/g, ""), 10) || 0)}
                                       style={{ padding: "0.15rem 0.35rem", fontSize: "0.75rem", width: "70px" }}
                                     />
                                     <input
@@ -1068,8 +1121,10 @@ export default function OrderFormView() {
                                   <input
                                     type="number"
                                     className="form-input qty-input"
+                                    min="0"
+                                    onKeyDown={restrictToDigitsOnly}
                                     value={formIt.quantity}
-                                    onChange={(e) => handleUpdateSessionItemQty(session.id, formIt.itemId, parseInt(e.target.value, 10) || 0)}
+                                    onChange={(e) => handleUpdateSessionItemQty(session.id, formIt.itemId, parseInt(e.target.value.replace(/\D/g, ""), 10) || 0)}
                                     style={{ padding: "0.15rem 0.35rem", fontSize: "0.75rem", width: "70px" }}
                                   />
                                   <input

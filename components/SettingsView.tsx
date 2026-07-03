@@ -472,17 +472,29 @@ export default function SettingsView() {
                             })}
                           </td>
                           <td className="td-cell text-right" style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end", alignItems: "center" }}>
-                            <button
-                              type="button"
-                              className="btn-icon-subtle"
-                              title="Change password"
-                              onClick={() => {
-                                setChangePwdUserId(isChangingPwd ? null : user.id);
-                                setChangePwdValue("");
-                              }}
-                            >
-                              <KeyRound size={14} />
-                            </button>
+                            {user.role !== "admin" ? (
+                              <button
+                                type="button"
+                                className="btn-icon-subtle"
+                                title="Change password"
+                                onClick={() => {
+                                  setChangePwdUserId(isChangingPwd ? null : user.id);
+                                  setChangePwdValue("");
+                                }}
+                              >
+                                <KeyRound size={14} />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-icon-subtle"
+                                disabled
+                                style={{ opacity: 0.3, cursor: "not-allowed" }}
+                                title="Admin passwords cannot be changed"
+                              >
+                                <KeyRound size={14} />
+                              </button>
+                            )}
                             <button
                               type="button"
                               disabled={isSelf}
@@ -552,33 +564,39 @@ export default function SettingsView() {
         <h3 className="users-panel-title">
           <Lock size={20} /> Change Your Password
         </h3>
-        <form onSubmit={handleSelfPasswordChange} style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div className="form-group">
-            <label className="form-label">New Password</label>
-            <input
-              type="password"
-              required
-              className="form-input"
-              placeholder="At least 6 characters"
-              value={selfNewPwd}
-              onChange={(e) => setSelfNewPwd(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Confirm New Password</label>
-            <input
-              type="password"
-              required
-              className="form-input"
-              placeholder="Repeat your new password"
-              value={selfNewPwdConfirm}
-              onChange={(e) => setSelfNewPwdConfirm(e.target.value)}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={selfPwdLoading}>
-            {selfPwdLoading ? "Updating..." : "Update Password"}
-          </button>
-        </form>
+        {isAdmin ? (
+          <p style={{ fontSize: "0.9rem", color: "var(--ink-muted)", margin: "0.5rem 0" }}>
+            Password modifications are disabled for administrator accounts in this deployment.
+          </p>
+        ) : (
+          <form onSubmit={handleSelfPasswordChange} style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input
+                type="password"
+                required
+                className="form-input"
+                placeholder="At least 6 characters"
+                value={selfNewPwd}
+                onChange={(e) => setSelfNewPwd(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirm New Password</label>
+              <input
+                type="password"
+                required
+                className="form-input"
+                placeholder="Repeat your new password"
+                value={selfNewPwdConfirm}
+                onChange={(e) => setSelfNewPwdConfirm(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={selfPwdLoading}>
+              {selfPwdLoading ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
