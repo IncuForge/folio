@@ -1717,17 +1717,6 @@ body {
   background-color: var(--bg-card);
 }
 
-@media (min-width: 640px) {
-  .package-dish-selector-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 768px) {
-  .package-dish-selector-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 
 .package-price-calculation-hint {
   font-size: 0.75rem;
