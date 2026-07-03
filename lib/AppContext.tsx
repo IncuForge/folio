@@ -396,14 +396,34 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   };
 
   const handleToggleItemAvailability = async (id: string, currentVal: boolean) => {
+    // Optimistic update — flip the local state immediately for instant feedback
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, is_available: !currentVal } : item
+      )
+    );
     try {
       const res = await fetch(`/api/items/${id}/availability`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_available: !currentVal }),
       });
-      if (res.ok) fetchItems();
+      if (!res.ok) {
+        // Roll back on API failure
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, is_available: currentVal } : item
+          )
+        );
+        console.error("Failed to toggle item availability, rolling back.");
+      }
     } catch (e) {
+      // Roll back on network error
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, is_available: currentVal } : item
+        )
+      );
       console.error("Error toggling item availability", e);
     }
   };

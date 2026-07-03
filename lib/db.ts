@@ -1121,6 +1121,18 @@ export const users = {
     const { error } = await sb().from("users").delete().eq("id", id);
     if (error) throw error;
   },
+
+  async updatePassword(id: string, hashedPassword: string) {
+    if (pgPool) {
+      await pgQuery(`UPDATE users SET password = $1 WHERE id = $2`, [hashedPassword, id]);
+      return;
+    }
+    const { error } = await sb()
+      .from("users")
+      .update({ password: hashedPassword })
+      .eq("id", id);
+    if (error) throw error;
+  },
 };
 
 // ---------------------------------------------------------------------------

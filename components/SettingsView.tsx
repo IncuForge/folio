@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/lib/AppContext";
-import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users } from "lucide-react";
+import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock } from "lucide-react";
 
 export default function SettingsView() {
   const { 
@@ -19,6 +19,16 @@ export default function SettingsView() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "manager">("manager");
+
+  // Admin: change another user's password inline
+  const [changePwdUserId, setChangePwdUserId] = useState<string | null>(null);
+  const [changePwdValue, setChangePwdValue] = useState("");
+  const [changePwdLoading, setChangePwdLoading] = useState(false);
+
+  // Self: change own password
+  const [selfNewPwd, setSelfNewPwd] = useState("");
+  const [selfNewPwdConfirm, setSelfNewPwdConfirm] = useState("");
+  const [selfPwdLoading, setSelfPwdLoading] = useState(false);
   
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -98,6 +108,70 @@ export default function SettingsView() {
       }
     } catch (err) {
       setErrorMsg("Failed to connect to the server.");
+    }
+  };
+
+  const handleAdminChangePassword = async (userId: string) => {
+    if (!changePwdValue || changePwdValue.length < 6) {
+      setErrorMsg("New password must be at least 6 characters.");
+      return;
+    }
+    setChangePwdLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: changePwdValue }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg("Password updated successfully.");
+        setChangePwdUserId(null);
+        setChangePwdValue("");
+      } else {
+        setErrorMsg(data.error || "Failed to update password.");
+      }
+    } catch {
+      setErrorMsg("Failed to connect to the server.");
+    } finally {
+      setChangePwdLoading(false);
+    }
+  };
+
+  const handleSelfPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    if (!selfNewPwd || selfNewPwd.length < 6) {
+      setErrorMsg("New password must be at least 6 characters.");
+      return;
+    }
+    if (selfNewPwd !== selfNewPwdConfirm) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+    if (!currentUser) return;
+    setSelfPwdLoading(true);
+    try {
+      const res = await fetch(`/api/users/${currentUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: selfNewPwd }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg("Your password has been updated. Please log in again.");
+        setSelfNewPwd("");
+        setSelfNewPwdConfirm("");
+      } else {
+        setErrorMsg(data.error || "Failed to update password.");
+      }
+    } catch {
+      setErrorMsg("Failed to connect to the server.");
+    } finally {
+      setSelfPwdLoading(false);
     }
   };
 
@@ -372,41 +446,91 @@ export default function SettingsView() {
                     <th className="th-cell">Teammate Email</th>
                     <th className="th-cell">System Role</th>
                     <th className="th-cell">Created At</th>
-                    <th className="th-cell text-right">Action</th>
+                    <th className="th-cell text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usersList.map((user) => {
                     const isSelf = user.id === currentUser?.id;
+                    const isChangingPwd = changePwdUserId === user.id;
                     return (
-                      <tr key={user.id} className="table-body-row">
-                        <td className="td-cell font-semibold">
-                          {user.email} {isSelf && <span className="text-[10px] text-[var(--ink-muted)] italic font-normal">(You)</span>}
-                        </td>
-                        <td className="td-cell">
-                          <span className={`status-badge ${user.role === "admin" ? "status-confirmed" : "status-pending"}`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="td-cell text-muted-color">
-                          {new Date(user.created_at).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </td>
-                        <td className="td-cell text-right">
-                          <button
-                            type="button"
-                            disabled={isSelf}
-                            className="btn-delete-icon"
-                            onClick={() => handleDeleteUser(user.id, user.email)}
-                            title={isSelf ? "You cannot delete your own active account" : "Delete user account"}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
+                      <React.Fragment key={user.id}>
+                        <tr className="table-body-row">
+                          <td className="td-cell font-semibold">
+                            {user.email} {isSelf && <span className="text-[10px] text-[var(--ink-muted)] italic font-normal">(You)</span>}
+                          </td>
+                          <td className="td-cell">
+                            <span className={`status-badge ${user.role === "admin" ? "status-confirmed" : "status-pending"}`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="td-cell text-muted-color">
+                            {new Date(user.created_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </td>
+                          <td className="td-cell text-right" style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end", alignItems: "center" }}>
+                            <button
+                              type="button"
+                              className="btn-icon-subtle"
+                              title="Change password"
+                              onClick={() => {
+                                setChangePwdUserId(isChangingPwd ? null : user.id);
+                                setChangePwdValue("");
+                              }}
+                            >
+                              <KeyRound size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSelf}
+                              className="btn-delete-icon"
+                              onClick={() => handleDeleteUser(user.id, user.email)}
+                              title={isSelf ? "You cannot delete your own active account" : "Delete user account"}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </td>
+                        </tr>
+                        {isChangingPwd && (
+                          <tr className="table-body-row" style={{ background: "var(--surface-hover)" }}>
+                            <td colSpan={4} className="td-cell" style={{ paddingTop: "0.6rem", paddingBottom: "0.6rem" }}>
+                              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                                <span style={{ fontSize: "0.7rem", color: "var(--ink-muted)", whiteSpace: "nowrap" }}>New password for <strong>{user.email}</strong>:</span>
+                                <input
+                                  type="password"
+                                  className="form-input"
+                                  style={{ flex: 1, minWidth: "160px", fontSize: "0.75rem", padding: "0.3rem 0.5rem" }}
+                                  placeholder="Min 6 characters"
+                                  value={changePwdValue}
+                                  onChange={(e) => setChangePwdValue(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleAdminChangePassword(user.id); }}
+                                  autoFocus
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{ fontSize: "0.7rem", padding: "0.3rem 0.75rem", whiteSpace: "nowrap" }}
+                                  disabled={changePwdLoading}
+                                  onClick={() => handleAdminChangePassword(user.id)}
+                                >
+                                  {changePwdLoading ? "Saving..." : "Set Password"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  style={{ fontSize: "0.7rem", padding: "0.3rem 0.6rem" }}
+                                  onClick={() => { setChangePwdUserId(null); setChangePwdValue(""); }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                   {usersList.length === 0 && (
@@ -422,6 +546,40 @@ export default function SettingsView() {
           </div>
         </div>
       )}
+
+      {/* Change Own Password — visible to ALL users */}
+      <div className="glass-card">
+        <h3 className="users-panel-title">
+          <Lock size={20} /> Change Your Password
+        </h3>
+        <form onSubmit={handleSelfPasswordChange} style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div className="form-group">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              required
+              className="form-input"
+              placeholder="At least 6 characters"
+              value={selfNewPwd}
+              onChange={(e) => setSelfNewPwd(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              className="form-input"
+              placeholder="Repeat your new password"
+              value={selfNewPwdConfirm}
+              onChange={(e) => setSelfNewPwdConfirm(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={selfPwdLoading}>
+            {selfPwdLoading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
