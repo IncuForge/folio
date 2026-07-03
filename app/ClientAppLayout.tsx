@@ -172,8 +172,6 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
 
         <footer className="app-footer" style={{ position: "fixed", bottom: "1.5rem", left: 0, right: 0, border: "none" }}>
           Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" className="underline-link">IncuForge</a> @ 2026
-          <span className="footer-separator">·</span>
-          <a href="https://github.com/IncuForge/folio" target="_blank" rel="noreferrer" className="underline-link">GitHub</a>
         </footer>
       </div>
     );
@@ -196,8 +194,6 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         {children}
         <footer className="app-footer">
           Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" className="underline-link">IncuForge</a> @ 2026
-          <span className="footer-separator">·</span>
-          <a href="https://github.com/IncuForge/folio" target="_blank" rel="noreferrer" className="underline-link">GitHub</a>
         </footer>
       </main>
 
