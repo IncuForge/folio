@@ -1601,6 +1601,20 @@ body {
   cursor: not-allowed;
 }
 
+.btn-icon-subtle {
+  color: var(--ink-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.btn-icon-subtle:hover {
+  color: var(--ink-base);
+  opacity: 0.8;
+}
+
 /* Food Library panels column layouts */
 .library-panels-layout {
   display: grid;
