@@ -28,6 +28,26 @@ export default function FoodLibraryView() {
     currencySymbol
   } = useAppContext();
 
+  // Prevent any key entry that is not a digit or a single decimal point (for prices)
+  const restrictToDecimalsOnly = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowed = [
+      "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter", "Home", "End"
+    ];
+    if (allowed.includes(e.key) || ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x", "z"].includes(e.key.toLowerCase()))) {
+      return;
+    }
+    if (e.key === ".") {
+      const val = e.currentTarget.value;
+      if (val.includes(".")) {
+        e.preventDefault();
+      }
+      return;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const isManager = currentUser?.role === "manager";
   const [activeLibraryTab, setActiveLibraryTab] = useState<"dishes" | "packages">("dishes");
   const [dishSearchQuery, setDishSearchQuery] = useState("");
@@ -260,6 +280,8 @@ export default function FoodLibraryView() {
                       className="form-input"
                       type="number"
                       step="0.01"
+                      min="0"
+                      onKeyDown={restrictToDecimalsOnly}
                       required
                       value={itemForm.price}
                       onChange={(e) => setItemForm({ ...itemForm, price: parseFloat(e.target.value) || 0 })}
@@ -457,6 +479,8 @@ export default function FoodLibraryView() {
                       className="form-input"
                       type="number"
                       step="0.01"
+                      min="0"
+                      onKeyDown={restrictToDecimalsOnly}
                       placeholder={`Leave blank to auto-calculate (${currencySymbol}${selectedDishesSum})`}
                       value={packageForm.price}
                       onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}

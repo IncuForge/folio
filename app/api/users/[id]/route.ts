@@ -62,10 +62,10 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    // Block password changes on the protected preview demo account
-    if (targetUser.email === PROTECTED_EMAIL) {
+    // Block password changes on any admin account
+    if (targetUser.role === "admin") {
       return NextResponse.json(
-        { error: "This account is protected and cannot be modified in this deployment." },
+        { error: "Password modifications are disabled for administrator accounts." },
         { status: 403 }
       );
     }
