@@ -4017,9 +4017,21 @@ body {
 }
 
 /* Tauri desktop chrome ---------------------------------------------------- */
+.desktop-shell:has(> .desktop-titlebar) {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.desktop-shell:has(> .desktop-titlebar) > .app-container {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .desktop-titlebar {
-  position: fixed;
-  inset: 0 0 auto 0;
+  position: relative;
   height: 38px;
   z-index: 10000;
   display: flex;
@@ -4046,5 +4058,71 @@ body {
 }
 .desktop-window-controls button:hover { background: var(--surface-hover); }
 .desktop-window-controls .desktop-window-close:hover { color: white; background: #c42b1c; }
-.desktop-titlebar ~ .app-container,
-.desktop-titlebar ~ * .app-container { padding-top: 38px; }
+
+@media (min-width: 1024px) {
+  .desktop-shell:has(> .desktop-titlebar) .sidebar { top: 38px; }
+  .desktop-shell:has(> .desktop-titlebar) .main-content {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Portable backup picker ------------------------------------------------- */
+.backup-file-picker {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+.backup-file-picker input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.backup-file-picker-button {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.85rem;
+  cursor: pointer;
+  border-right: 1px solid var(--border-ink);
+  background: var(--ink);
+  color: var(--bg-card);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: opacity 0.15s ease;
+}
+
+.backup-file-picker-button:hover { opacity: 0.82; }
+.backup-file-picker:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.backup-file-picker-name {
+  min-width: 0;
+  padding: 0 0.8rem;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backup-file-picker-name.has-file { color: var(--ink); font-weight: 600; }
+
+@media (max-width: 520px) {
+  .backup-file-picker { grid-template-columns: 1fr; }
+  .backup-file-picker-button { min-height: 42px; justify-content: center; border-right: 0; border-bottom: 1px solid var(--border-ink); }
+  .backup-file-picker-name { padding: 0.7rem 0.8rem; }
+}

@@ -337,15 +337,23 @@ export default function SettingsView() {
 
             <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
               <h4 className="users-column-title"><Upload size={15} /> Restore on this computer</h4>
-              <input
-                type="file"
-                accept=".json,.folio-backup.json"
-                className="form-input"
-                onChange={(event) => {
-                  setRestoreFile(event.target.files?.[0] || null);
-                  setRestorePreview(null);
-                }}
-              />
+              <div className="backup-file-picker">
+                <label className="backup-file-picker-button" htmlFor="backup-restore-file">
+                  <Upload size={15} /> Choose backup file
+                </label>
+                <span className={`backup-file-picker-name${restoreFile ? " has-file" : ""}`} title={restoreFile?.name}>
+                  {restoreFile?.name || "No backup selected"}
+                </span>
+                <input
+                  id="backup-restore-file"
+                  type="file"
+                  accept=".json,.folio-backup.json"
+                  onChange={(event) => {
+                    setRestoreFile(event.target.files?.[0] || null);
+                    setRestorePreview(null);
+                  }}
+                />
+              </div>
               <button type="button" className="btn btn-secondary btn-full-width" style={{ marginTop: "0.7rem" }} disabled={restoreLoading || !restoreFile} onClick={handleValidateRestore}>
                 {restoreLoading ? "Checking…" : "Check Backup"}
               </button>
