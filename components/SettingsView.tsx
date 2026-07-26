@@ -310,7 +310,7 @@ export default function SettingsView() {
       <div className="settings-grid">
         {/* Backups Panel - Admins Only */}
         {isAdmin ? (
-          <div className="glass-card settings-panel">
+          <div className="glass-card settings-panel settings-panel-backup">
             <h3 className="panel-title">
               Database Backups
             </h3>
@@ -335,7 +335,7 @@ export default function SettingsView() {
               </button>
             </div>
 
-            <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
+            <section className="settings-panel-section">
               <h4 className="users-column-title"><Upload size={15} /> Restore on this computer</h4>
               <div className="backup-file-picker">
                 <label className="backup-file-picker-button" htmlFor="backup-restore-file">
@@ -366,15 +366,15 @@ export default function SettingsView() {
                   </button>
                 </div>
               )}
-            </div>
+            </section>
 
-            <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
+            <section className="settings-panel-section">
               <h4 className="users-column-title"><Clock size={15} /> Automatic backups</h4>
-              <label style={{ display: "flex", gap: "0.6rem", alignItems: "center", fontSize: "0.8rem" }}>
+              <label className="settings-checkbox-row">
                 <input type="checkbox" checked={autoBackupEnabled} onChange={(event) => setAutoBackupEnabled(event.target.checked)} />
                 Keep automatic local backups
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginTop: "0.7rem" }}>
+              <div className="settings-inline-fields">
                 <select className="form-input" value={autoBackupFrequency} onChange={(event) => setAutoBackupFrequency(event.target.value)} disabled={!autoBackupEnabled}>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -385,7 +385,7 @@ export default function SettingsView() {
                 The policy is ready now. Unattended folder backups activate in Folio Desktop; browsers cannot write to a local folder without asking.
               </p>
               <button type="button" className="btn btn-secondary btn-full-width" onClick={saveBackupPolicy}>Save Backup Policy</button>
-            </div>
+            </section>
           </div>
         ) : (
           <div className="glass-card settings-panel settings-panel-disabled">
@@ -400,7 +400,7 @@ export default function SettingsView() {
         )}
 
         {/* Data Export Excel Panel */}
-        <div className="glass-card settings-panel">
+        <div className="glass-card settings-panel settings-panel-export">
           <h3 className="panel-title">
             Spreadsheet Exports
           </h3>
@@ -418,7 +418,7 @@ export default function SettingsView() {
         </div>
 
         {/* PDF Presentation Settings Panel */}
-        <div className="glass-card settings-panel">
+        <div className="glass-card settings-panel settings-panel-branding">
           <h3 className="panel-title">
             Event Receipt &amp; PDF Settings
           </h3>
