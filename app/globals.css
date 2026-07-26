@@ -1553,6 +1553,34 @@ body {
   margin-top: 0.5rem;
 }
 
+.settings-support-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.settings-support-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-self: start;
+}
+
+.settings-password-form {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+.settings-guide-card .btn { align-self: flex-start; }
+
+@media (min-width: 1000px) {
+  .settings-support-grid { grid-template-columns: minmax(28rem, 1.15fr) minmax(18rem, 0.85fr); }
+  .settings-password-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-password-form .btn { grid-column: 1 / -1; justify-self: start; min-width: 12rem; }
+}
+
 .users-panel-title {
   font-size: 1.125rem;
   font-weight: 700;
@@ -4082,6 +4110,42 @@ body {
 }
 
 /* Tauri desktop chrome ---------------------------------------------------- */
+.desktop-shell .main-content {
+  padding: clamp(1.25rem, 2vw, 2rem);
+  gap: 1.25rem;
+}
+
+.desktop-shell :is(
+  .orders-container,
+  .dashboard-container,
+  .reports-container,
+  .settings-container,
+  .library-container,
+  .order-form-container,
+  .calendar-container
+) { gap: 1.25rem; }
+
+.desktop-shell .glass-card { padding: 1.25rem; }
+.desktop-shell .settings-panel { padding: 1.35rem; }
+.desktop-shell .dashboard-stats-grid,
+.desktop-shell .dashboard-main-grid,
+.desktop-shell .reports-charts-grid,
+.desktop-shell .reports-details-grid { gap: 1rem; }
+.desktop-shell .stat-box { padding: 1.15rem 1.25rem; }
+.desktop-shell .stat-box-value { margin-top: 0.45rem; }
+.desktop-shell .filter-card,
+.desktop-shell .reports-period-nav { padding: 0.85rem 1rem; }
+.desktop-shell .empty-state-card { padding: 2rem 1rem; }
+.desktop-shell .empty-state-icon-wrapper { margin-bottom: 0.7rem; }
+.desktop-shell .empty-state-desc { margin-top: 0.35rem; line-height: 1.5; }
+.desktop-shell .chart-card:has(.chart-empty-state) .chart-container { height: 170px; }
+.desktop-shell .details-card { padding: 1.15rem 1.25rem; }
+.desktop-shell .app-footer { padding-top: 1rem; }
+
+@media (max-width: 1199px) {
+  .desktop-shell .main-content { padding: 1.25rem; }
+}
+
 .desktop-shell:has(> .desktop-titlebar) {
   height: 100vh;
   display: grid;

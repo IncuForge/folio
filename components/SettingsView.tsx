@@ -712,12 +712,13 @@ export default function SettingsView() {
         </div>
       )}
 
-      {/* Change Own Password — visible to ALL users */}
-      <div className="glass-card">
-        <h3 className="users-panel-title">
-          <Lock size={20} /> Change Your Password
-        </h3>
-          <form onSubmit={handleSelfPasswordChange} style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div className="settings-support-grid">
+        {/* Change Own Password — visible to ALL users */}
+        <div className="glass-card settings-support-card settings-password-card">
+          <h3 className="users-panel-title">
+            <Lock size={20} /> Change Your Password
+          </h3>
+          <form onSubmit={handleSelfPasswordChange} className="settings-password-form">
             <div className="form-group">
               <label className="form-label">New Password</label>
               <input
@@ -744,15 +745,16 @@ export default function SettingsView() {
               {selfPwdLoading ? "Updating..." : "Update Password"}
             </button>
           </form>
-      </div>
+        </div>
 
-      <div className="glass-card" style={{ marginTop: "1.5rem" }}>
-        <h3 className="users-panel-title"><BookOpen size={20} /> Getting Started</h3>
-        <p className="panel-desc">Food Library → Package Kits → Orders → Collections → Kitchen Sheets. The first-run guide can be shown again on this device.</p>
-        <button type="button" className="btn btn-secondary" onClick={() => {
-          localStorage.removeItem("folio-onboarding-dismissed");
-          window.location.reload();
-        }}>Show Guide Again</button>
+        <div className="glass-card settings-support-card settings-guide-card">
+          <h3 className="users-panel-title"><BookOpen size={20} /> Getting Started</h3>
+          <p className="panel-desc">Food Library → Package Kits → Orders → Collections → Kitchen Sheets. The first-run guide can be shown again on this device.</p>
+          <button type="button" className="btn btn-secondary" onClick={() => {
+            localStorage.removeItem("folio-onboarding-dismissed");
+            window.location.reload();
+          }}>Show Guide Again</button>
+        </div>
       </div>
     </div>
   );
