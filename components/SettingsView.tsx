@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/lib/AppContext";
 import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen } from "lucide-react";
+import { saveResponseToFile } from "@/lib/save-file";
 
 export default function SettingsView() {
   const { 
@@ -236,15 +237,16 @@ export default function SettingsView() {
   const downloadSafetyBackup = async () => {
     const response = await fetch("/api/export/backup", { cache: "no-store" });
     if (!response.ok) throw new Error("Could not create the pre-restore safety backup.");
-    const blob = await response.blob();
-    const disposition = response.headers.get("content-disposition") || "";
-    const match = disposition.match(/filename="?([^"]+)"?/);
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = match?.[1] || "folio-pre-restore-backup.folio-backup.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
+    await saveResponseToFile(response, "folio-pre-restore-backup.folio-backup.json");
+  };
+
+  const handleExport = async (endpoint: string, fallbackName: string) => {
+    setErrorMsg("");
+    try {
+      await saveResponseToFile(await fetch(endpoint, { cache: "no-store" }), fallbackName);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Export failed.");
+    }
   };
 
   const handleRestore = async () => {
@@ -317,18 +319,20 @@ export default function SettingsView() {
             </p>
 
             <div className="panel-actions-list">
-              <a 
-                href="/api/export/backup" 
+              <button
+                type="button"
+                onClick={() => handleExport("/api/export/backup", "folio-backup.folio-backup.json")}
                 className="btn btn-secondary btn-full-width"
               >
                 <Database size={16} /> Download Complete Folio Backup
-              </a>
-              <a 
-                href="/api/export/json" 
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport("/api/export/json", "folio-export.json")}
                 className="btn btn-secondary btn-full-width"
               >
                 <FileJson size={16} /> Download Full Dump (JSON)
-              </a>
+              </button>
             </div>
 
             <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
@@ -396,12 +400,13 @@ export default function SettingsView() {
             Export all client details, bookings, and financial tracking data into spreadsheets to open in Microsoft Excel or Google Sheets.
           </p>
 
-          <a 
-            href="/api/export/csv" 
+          <button
+            type="button"
+            onClick={() => handleExport("/api/export/csv", "folio-orders.csv")}
             className="btn btn-primary btn-full-width"
           >
             <FileSpreadsheet size={16} /> Export Bookings to CSV (For Excel)
-          </a>
+          </button>
         </div>
 
         {/* PDF Presentation Settings Panel */}

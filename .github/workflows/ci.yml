@@ -40,3 +40,6 @@ jobs:
 
       - name: Build production application
         run: npm run build
+
+      - name: Build desktop renderer
+        run: npm run desktop:build

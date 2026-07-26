@@ -4015,3 +4015,36 @@ body {
 .mobile-bottom-nav {
   z-index: 60 !important;
 }
+
+/* Tauri desktop chrome ---------------------------------------------------- */
+.desktop-titlebar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 38px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 14px;
+  color: var(--ink);
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-ink);
+  user-select: none;
+}
+
+.desktop-titlebar-mac { padding-left: 78px; }
+.desktop-titlebar-brand { font-size: 12px; font-weight: 650; letter-spacing: 0.02em; }
+.desktop-window-controls { align-self: stretch; display: flex; }
+.desktop-window-controls button {
+  width: 46px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.desktop-window-controls button:hover { background: var(--surface-hover); }
+.desktop-window-controls .desktop-window-close:hover { color: white; background: #c42b1c; }
+.desktop-titlebar ~ .app-container,
+.desktop-titlebar ~ * .app-container { padding-top: 38px; }

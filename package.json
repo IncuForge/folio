@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "desktop:dev": "vite --config desktop/vite.config.ts",
+    "desktop:build": "vite build --config desktop/vite.config.ts",
+    "tauri": "tauri",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,6 +14,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-sql": "^2.4.0",
     "lucide-react": "^0.475.0",
     "next": "^16.2.12",
     "pg": "^8.22.0",
@@ -19,13 +26,16 @@
     "recharts": "^2.15.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.4",
     "eslint": "^9",
     "eslint-config-next": "^16.2.12",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.1.5"
   }
 }
