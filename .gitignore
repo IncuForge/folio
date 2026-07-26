@@ -30,6 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 client_errors.log
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+/data/backups/
+*.folio-backup.json
 
 # env files (can opt-in for committing if needed)
 .env*

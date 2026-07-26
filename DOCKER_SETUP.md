@@ -124,14 +124,7 @@ aws s3 mb s3://dish-images \
 | `http://localhost:8333` | SeaweedFS S3 API endpoint |
 | `localhost:5432` | PostgreSQL (connect via TablePlus, DBeaver, etc.) |
 
-Log in using the seeded admin credentials:
-
-| Email | Password | Role |
-|---|---|---|
-| `admin1@cater.com` | `7QegW6PgVol7Sv` | Admin |
-| `admin2@cater.com` | `uGQ9jb35ziL0xg` | Admin |
-
-> **Change these immediately** via **Settings → User Accounts** after your first login.
+Open Folio and follow the first-run setup. You will choose the business name, owner username, password, currency, and backup policy. No universal administrator credentials are installed.
 
 ---
 

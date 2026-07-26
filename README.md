@@ -26,7 +26,7 @@ There are two user roles:
 - **Admin** — Full access. Can manage everything including users, the food catalog, and all orders.
 - **Manager** — Limited access. Can create and view orders and manage payments, but cannot delete orders or modify the food catalog.
 
-Default login credentials are seeded on first setup. See the setup guides below.
+On first launch, Folio guides the owner through creating the business profile and first administrator account. No universal credentials are shipped.
 
 ---
 

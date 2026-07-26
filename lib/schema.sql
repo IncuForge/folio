@@ -75,6 +75,7 @@ CREATE TABLE orders (
     event_end_date DATE,
     packages_selected JSONB DEFAULT '[]'::jsonb,
     sessions JSONB DEFAULT '[]'::jsonb,
+    discount_percent NUMERIC(5, 2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -105,7 +106,6 @@ ALTER TABLE packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE package_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- 5. SEED DATA GENERATOR FOR IMMEDIATE DEMONSTRATIONS
 -- Inserts starting values into the items list if empty
@@ -141,13 +141,9 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50) DEFAULT 'manager', -- 'admin', 'manager'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Seed initial admin credentials (SHA-256 hashes of original passwords)
-INSERT INTO users (email, password, role) 
-VALUES 
-('admin1@cater.com', '2582463df0f9a16ca9d54ecee7e5f91387fe7bd097cad5f315840b816002f7c7', 'admin'),
-('admin2@cater.com', '836a8e5b71b370802955f584071bfde47224c434ba2a921f920895f833b154e3', 'admin')
-ON CONFLICT (email) DO NOTHING;
+-- The first owner account is created through the first-run setup flow.
 
 -- 7. SYSTEM SETTINGS
 CREATE TABLE IF NOT EXISTS settings (
@@ -158,5 +154,9 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO settings (key, value) VALUES
 ('pdfBrandName', 'Cater Flow Premium Catering'),
 ('currencySymbol', '₹'),
-('paymentMethods', '["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]')
+('paymentMethods', '["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]'),
+('onboardingVersion', '0'),
+('autoBackupEnabled', 'true'),
+('autoBackupFrequency', 'daily'),
+('autoBackupRetention', '14')
 ON CONFLICT (key) DO NOTHING;

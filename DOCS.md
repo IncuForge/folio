@@ -96,7 +96,14 @@ Folio uses **custom application-level authentication**, not Supabase Auth or Nex
 - A session cookie `folio_session` is set as **HTTP-Only** and **Secure** (in production)
 - The cookie payload is base64-encoded JSON: `{ id, email, role, ts }`
 - The `SESSION_SECRET` env variable is used to validate and sign session tokens
-- **Passwords are stored in plaintext** — this is by design for internal/private network use. Do not expose without a reverse proxy + Cloudflare Tunnel or equivalent
+- Passwords are stored as one-way hashes. New installations create the first owner through the first-run setup flow and do not ship universal credentials.
+- Session cookies are signed and expire after seven days. Set a strong SESSION_SECRET for every production deployment.
+
+## Portable backups
+
+Settings → Database Backups exports a versioned Folio backup document containing all orders (past, active, and future), order-item links, library items, package kits, application settings, and user credential hashes. Passwords are never exported in plaintext.
+
+Restore validates the document before enabling replacement and downloads a fresh safety backup first. Direct PostgreSQL restores are performed inside one transaction. Automatic backups are retained under data/backups; Docker mounts that directory onto the host.
 
 ### Roles
 | Role | Permissions |

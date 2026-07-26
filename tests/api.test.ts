@@ -423,9 +423,14 @@ test("API: Multi-Format Exporters", async () => {
   // 3. GET export Backup (.db binary)
   const resBackup = await exportBackup();
   assert.strictEqual(resBackup.status, 200);
-  assert.strictEqual(resBackup.headers.get("Content-Type"), "application/octet-stream");
+  assert.strictEqual(resBackup.headers.get("Content-Type"), "application/json; charset=utf-8");
   const arrayBuffer = await resBackup.arrayBuffer();
   assert.ok(arrayBuffer.byteLength > 0);
+  const backup = JSON.parse(new TextDecoder().decode(arrayBuffer));
+  assert.strictEqual(backup.format, "folio.backup");
+  assert.strictEqual(backup.version, 2);
+  assert.ok(Array.isArray(backup.tables.users));
+  assert.ok(Array.isArray(backup.tables.settings));
 
 });
 

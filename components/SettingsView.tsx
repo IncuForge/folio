@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/lib/AppContext";
-import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock } from "lucide-react";
+import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen } from "lucide-react";
 
 export default function SettingsView() {
   const { 
@@ -34,10 +34,28 @@ export default function SettingsView() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [localBrandName, setLocalBrandName] = useState("");
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restorePreview, setRestorePreview] = useState<any>(null);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
+  const [autoBackupFrequency, setAutoBackupFrequency] = useState("daily");
+  const [autoBackupRetention, setAutoBackupRetention] = useState(14);
 
   useEffect(() => {
     setLocalBrandName(pdfBrandName || "");
   }, [pdfBrandName]);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data) return;
+        setAutoBackupEnabled(data.autoBackupEnabled !== "false");
+        setAutoBackupFrequency(data.autoBackupFrequency || "daily");
+        setAutoBackupRetention(Number(data.autoBackupRetention || 14));
+      })
+      .catch(() => undefined);
+  }, []);
 
   const isAdmin = currentUser?.role === "admin";
   const newPaymentMethodInputRef = React.useRef<HTMLInputElement>(null);
@@ -175,6 +193,96 @@ export default function SettingsView() {
     }
   };
 
+  const readRestoreFile = async () => {
+    if (!restoreFile) {
+      setErrorMsg("Choose a Folio backup file first.");
+      return null;
+    }
+    if (restoreFile.size > 50 * 1024 * 1024) {
+      setErrorMsg("Backup files are limited to 50 MB.");
+      return null;
+    }
+    try {
+      return JSON.parse(await restoreFile.text());
+    } catch {
+      setErrorMsg("The selected file is not valid JSON.");
+      return null;
+    }
+  };
+
+  const handleValidateRestore = async () => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    const backup = await readRestoreFile();
+    if (!backup) return;
+    setRestoreLoading(true);
+    try {
+      const response = await fetch("/api/backup/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backup, confirm: false }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Backup validation failed.");
+      setRestorePreview(data);
+    } catch (error) {
+      setRestorePreview(null);
+      setErrorMsg(error instanceof Error ? error.message : "Backup validation failed.");
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
+  const downloadSafetyBackup = async () => {
+    const response = await fetch("/api/export/backup", { cache: "no-store" });
+    if (!response.ok) throw new Error("Could not create the pre-restore safety backup.");
+    const blob = await response.blob();
+    const disposition = response.headers.get("content-disposition") || "";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = match?.[1] || "folio-pre-restore-backup.folio-backup.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRestore = async () => {
+    const backup = await readRestoreFile();
+    if (!backup || !restorePreview) return;
+    if (!confirm("Restore this backup? All current Folio data will be replaced. A safety backup will download first.")) return;
+    setRestoreLoading(true);
+    setErrorMsg("");
+    try {
+      await downloadSafetyBackup();
+      const response = await fetch("/api/backup/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backup, confirm: true }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Restore failed.");
+      setSuccessMsg("Backup restored. Sign in again to load the restored workspace.");
+      setRestorePreview(null);
+      await fetch("/api/auth/logout", { method: "POST" });
+      setTimeout(() => window.location.reload(), 1800);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Restore failed.");
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
+  const saveBackupPolicy = async () => {
+    const response = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ autoBackupEnabled, autoBackupFrequency, autoBackupRetention }),
+    });
+    if (response.ok) setSuccessMsg("Automatic backup policy saved.");
+    else setErrorMsg("Could not save the automatic backup policy.");
+  };
+
   return (
     <div className="settings-container">
       <header>
@@ -205,7 +313,7 @@ export default function SettingsView() {
               Database Backups
             </h3>
             <p className="panel-desc">
-              Download copies of your data to store on secure local drives. Database backups are exported in human-readable JSON formats.
+              Create a portable copy of orders, history, library items, package kits, settings, and credential hashes.
             </p>
 
             <div className="panel-actions-list">
@@ -213,7 +321,7 @@ export default function SettingsView() {
                 href="/api/export/backup" 
                 className="btn btn-secondary btn-full-width"
               >
-                <Database size={16} /> Download Database Backup (JSON)
+                <Database size={16} /> Download Complete Folio Backup
               </a>
               <a 
                 href="/api/export/json" 
@@ -221,6 +329,50 @@ export default function SettingsView() {
               >
                 <FileJson size={16} /> Download Full Dump (JSON)
               </a>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
+              <h4 className="users-column-title"><Upload size={15} /> Restore on this computer</h4>
+              <input
+                type="file"
+                accept=".json,.folio-backup.json"
+                className="form-input"
+                onChange={(event) => {
+                  setRestoreFile(event.target.files?.[0] || null);
+                  setRestorePreview(null);
+                }}
+              />
+              <button type="button" className="btn btn-secondary btn-full-width" style={{ marginTop: "0.7rem" }} disabled={restoreLoading || !restoreFile} onClick={handleValidateRestore}>
+                {restoreLoading ? "Checking…" : "Check Backup"}
+              </button>
+              {restorePreview && (
+                <div style={{ marginTop: "0.8rem", padding: "0.8rem", border: "1px solid var(--border-ink)", fontSize: "0.75rem" }}>
+                  <ShieldCheck size={15} style={{ display: "inline", marginRight: "0.4rem" }} />
+                  Valid backup from {new Date(restorePreview.createdAt).toLocaleString()}.
+                  <button type="button" className="btn btn-primary btn-full-width" style={{ marginTop: "0.7rem" }} disabled={restoreLoading} onClick={handleRestore}>
+                    Restore Backup
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border-ink)", marginTop: "1.25rem", paddingTop: "1.1rem" }}>
+              <h4 className="users-column-title"><Clock size={15} /> Automatic backups</h4>
+              <label style={{ display: "flex", gap: "0.6rem", alignItems: "center", fontSize: "0.8rem" }}>
+                <input type="checkbox" checked={autoBackupEnabled} onChange={(event) => setAutoBackupEnabled(event.target.checked)} />
+                Keep automatic local backups
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", marginTop: "0.7rem" }}>
+                <select className="form-input" value={autoBackupFrequency} onChange={(event) => setAutoBackupFrequency(event.target.value)} disabled={!autoBackupEnabled}>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+                <input className="form-input" type="number" min={3} max={90} value={autoBackupRetention} onChange={(event) => setAutoBackupRetention(Number(event.target.value))} disabled={!autoBackupEnabled} title="Backups to keep" />
+              </div>
+              <p className="panel-desc" style={{ marginTop: "0.7rem" }}>
+                The policy is ready now. Unattended folder backups activate in Folio Desktop; browsers cannot write to a local folder without asking.
+              </p>
+              <button type="button" className="btn btn-secondary btn-full-width" onClick={saveBackupPolicy}>Save Backup Policy</button>
             </div>
           </div>
         ) : (
@@ -397,12 +549,12 @@ export default function SettingsView() {
 
               <form onSubmit={handleCreateUser} className="users-form">
                 <div className="form-group">
-                  <label className="form-label">Email Address</label>
+                  <label className="form-label">Username</label>
                   <input
-                    type="email"
+                    type="text"
                     required
                     className="form-input"
-                    placeholder="e.g. teammate@cater.com"
+                    placeholder="e.g. kitchen-manager"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                   />
@@ -472,29 +624,17 @@ export default function SettingsView() {
                             })}
                           </td>
                           <td className="td-cell text-right" style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end", alignItems: "center" }}>
-                            {user.role !== "admin" ? (
-                              <button
-                                type="button"
-                                className="btn-icon-subtle"
-                                title="Change password"
-                                onClick={() => {
-                                  setChangePwdUserId(isChangingPwd ? null : user.id);
-                                  setChangePwdValue("");
-                                }}
-                              >
-                                <KeyRound size={14} />
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn-icon-subtle"
-                                disabled
-                                style={{ opacity: 0.3, cursor: "not-allowed" }}
-                                title="Admin passwords cannot be changed"
-                              >
-                                <KeyRound size={14} />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="btn-icon-subtle"
+                              title="Change password"
+                              onClick={() => {
+                                setChangePwdUserId(isChangingPwd ? null : user.id);
+                                setChangePwdValue("");
+                              }}
+                            >
+                              <KeyRound size={14} />
+                            </button>
                             <button
                               type="button"
                               disabled={isSelf}
@@ -564,11 +704,6 @@ export default function SettingsView() {
         <h3 className="users-panel-title">
           <Lock size={20} /> Change Your Password
         </h3>
-        {isAdmin ? (
-          <p style={{ fontSize: "0.9rem", color: "var(--ink-muted)", margin: "0.5rem 0" }}>
-            Password modifications are disabled for administrator accounts in this deployment.
-          </p>
-        ) : (
           <form onSubmit={handleSelfPasswordChange} style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div className="form-group">
               <label className="form-label">New Password</label>
@@ -596,7 +731,15 @@ export default function SettingsView() {
               {selfPwdLoading ? "Updating..." : "Update Password"}
             </button>
           </form>
-        )}
+      </div>
+
+      <div className="glass-card" style={{ marginTop: "1.5rem" }}>
+        <h3 className="users-panel-title"><BookOpen size={20} /> Getting Started</h3>
+        <p className="panel-desc">Food Library → Package Kits → Orders → Collections → Kitchen Sheets. The first-run guide can be shown again on this device.</p>
+        <button type="button" className="btn btn-secondary" onClick={() => {
+          localStorage.removeItem("folio-onboarding-dismissed");
+          window.location.reload();
+        }}>Show Guide Again</button>
       </div>
     </div>
   );

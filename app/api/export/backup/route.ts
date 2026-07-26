@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { rawQuery } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth";
+import {
+  BACKUP_TABLES,
+  FOLIO_BACKUP_FORMAT,
+  FOLIO_BACKUP_VERSION,
+  backupFilename,
+} from "@/lib/backup";
 
 const SESSION_COOKIE = "folio_session";
 
@@ -18,30 +24,27 @@ export async function GET() {
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
-    const [items, packages, packageItems, orders, orderItems] = await Promise.all([
-      rawQuery("items"),
-      rawQuery("packages"),
-      rawQuery("package_items"),
-      rawQuery("orders"),
-      rawQuery("order_items"),
-    ]);
+    const rows = await Promise.all(BACKUP_TABLES.map((table) => rawQuery(table)));
+    const tables = Object.fromEntries(
+      BACKUP_TABLES.map((table, index) => [table, rows[index]])
+    );
 
     const backupData = {
-      backupVersion: "1.0",
-      backedUpAt: new Date().toISOString(),
-      items,
-      packages,
-      packageItems,
-      orders,
-      orderItems,
+      format: FOLIO_BACKUP_FORMAT,
+      version: FOLIO_BACKUP_VERSION,
+      createdAt: new Date().toISOString(),
+      appVersion: process.env.npm_package_version || "0.1.0",
+      source: "web",
+      tables,
     };
 
     const fileBuffer = Buffer.from(JSON.stringify(backupData, null, 2));
 
     return new NextResponse(fileBuffer, {
       headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": "attachment; filename=folio_database_backup.json",
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": "attachment; filename=\"" + backupFilename() + "\"",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error: any) {

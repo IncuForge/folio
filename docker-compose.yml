@@ -97,6 +97,9 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-change_me_in_production}
     ports:
       - "3000:3000"
+    volumes:
+      # Complete retained Folio backups are available on the host.
+      - ./data/backups:/app/data/backups
 
 volumes:
   postgres_data:

@@ -5,9 +5,6 @@ import { verifySession, hashPassword } from "@/lib/auth";
 
 const SESSION_COOKIE = "folio_session";
 
-// The preview demo account that should never have its password changed
-const PROTECTED_EMAIL = "admin2@cater.com";
-
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
@@ -20,8 +17,8 @@ async function getSessionUser() {
 }
 
 // PATCH /api/users/[id] — change a user's password
-// - Admin can change any user's password (except the protected preview account)
-// - A user can change their own password (except if they ARE the protected account)
+// - Admin can change any user's password
+// - A user can change their own password
 export async function PATCH(
   request: Request,
   { params }: RouteParams
@@ -60,14 +57,6 @@ export async function PATCH(
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
-    }
-
-    // Block password changes on any admin account
-    if (targetUser.role === "admin") {
-      return NextResponse.json(
-        { error: "Password modifications are disabled for administrator accounts." },
-        { status: 403 }
-      );
     }
 
     const hashed = await hashPassword(newPassword);

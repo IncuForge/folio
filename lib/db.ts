@@ -10,6 +10,7 @@
 
 import { Pool } from "pg";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { FolioBackup, BackupTable } from "./backup";
 
 // ---------------------------------------------------------------------------
 // Driver Selection
@@ -63,6 +64,14 @@ export function initDb() {
       description TEXT,
       price REAL DEFAULT NULL,
       is_deleted INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT DEFAULT 'manager',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS package_items (
@@ -1063,6 +1072,18 @@ export const orders = {
 // USERS  (application-level auth — NOT Supabase Auth)
 // ---------------------------------------------------------------------------
 export const users = {
+  async count() {
+    if (pgPool) {
+      const rows = await pgQuery("SELECT COUNT(*)::int AS count FROM users");
+      return Number(rows[0]?.count ?? 0);
+    }
+    const { count, error } = await sb()
+      .from("users")
+      .select("*", { count: "exact", head: true });
+    if (error) throw error;
+    return count ?? 0;
+  },
+
   async getAll() {
     if (pgPool) {
       return pgQuery(
@@ -1192,4 +1213,69 @@ export async function rawQuery(table: string) {
   const { data, error } = await sb().from(table).select("*");
   if (error) throw error;
   return data ?? [];
+}
+
+const restoreColumns: Record<BackupTable, string[]> = {
+  items: ["id", "name", "type", "ingredients", "style", "image", "notes", "price", "is_available", "is_deleted", "created_at"],
+  packages: ["id", "name", "description", "price", "is_deleted", "created_at"],
+  package_items: ["package_id", "item_id"],
+  orders: [
+    "id", "client_name", "client_phone", "event_name", "event_date", "event_end_date",
+    "event_time", "venue", "guest_count", "notes", "status", "additional_charges",
+    "booking_paid", "booking_amount", "booking_payment_notes", "second_paid", "second_amount",
+    "second_payment_notes", "final_paid", "final_amount", "final_payment_notes", "package_id",
+    "package_price", "packages_selected", "sessions", "discount_percent", "created_at",
+  ],
+  order_items: ["order_id", "item_id", "quantity", "notes"],
+  users: ["id", "email", "password", "role", "created_at"],
+  settings: ["key", "value"],
+};
+
+/**
+ * Atomically replaces a direct-Postgres database with a validated backup.
+ * Supabase restore is intentionally refused because its JS client cannot make
+ * this multi-table replacement atomic.
+ */
+export async function restoreBackup(backup: FolioBackup): Promise<void> {
+  if (!pgPool || (global as any).db) {
+    throw new Error("Restore currently requires direct PostgreSQL or Folio Desktop.");
+  }
+
+  const client = await pgPool.connect();
+  const deleteOrder: BackupTable[] = [
+    "order_items", "package_items", "orders", "packages", "items", "settings", "users",
+  ];
+  const insertOrder: BackupTable[] = [
+    "items", "packages", "users", "settings", "orders", "package_items", "order_items",
+  ];
+
+  try {
+    await client.query("BEGIN");
+    for (const table of deleteOrder) {
+      await client.query("DELETE FROM \"" + table + "\"");
+    }
+    for (const table of insertOrder) {
+      const allowed = restoreColumns[table];
+      for (const row of backup.tables[table]) {
+        const columns = allowed.filter((column) => row[column] !== undefined);
+        if (columns.length === 0) continue;
+        const values = columns.map((column) => {
+          const value = row[column];
+          if (["additional_charges", "packages_selected", "sessions"].includes(column) && typeof value !== "string") {
+            return JSON.stringify(value ?? []);
+          }
+          return value;
+        });
+        const names = columns.map((column) => "\"" + column + "\"").join(", ");
+        const placeholders = columns.map((_, index) => "$" + (index + 1)).join(", ");
+        await client.query("INSERT INTO \"" + table + "\" (" + names + ") VALUES (" + placeholders + ")", values);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }

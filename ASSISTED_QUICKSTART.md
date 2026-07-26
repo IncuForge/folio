@@ -209,14 +209,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Log in with the default credentials:
-
-| Email | Password | Role |
-|---|---|---|
-| `admin1@cater.com` | `7QegW6PgVol7Sv` | Admin |
-| `admin2@cater.com` | `uGQ9jb35ziL0xg` | Admin |
-
-> **Change these immediately** — go to **Settings → User Accounts** and update the passwords.
+Open Folio and complete the first-run setup to create the business profile and owner account. No universal administrator credentials are installed.
 
 ---
 
