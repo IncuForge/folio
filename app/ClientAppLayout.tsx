@@ -5,6 +5,11 @@ import Sidebar from "@/components/Sidebar";
 import ModalOverlays from "@/components/ModalOverlays";
 import CommandPalette from "@/components/CommandPalette";
 import { useAppContext } from "@/lib/AppContext";
+const FolioLogo = ({ pulse = false }: { pulse?: boolean }) => (
+  <div className={`login-logo${pulse ? " animate-pulse" : ""}`}>
+    <img src="/icon.svg" alt="Folio" />
+  </div>
+);
 
 export default function ClientAppLayout({ children }: { children: React.ReactNode }) {
   const {
@@ -224,9 +229,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
     return (
       <div className="login-loading-screen">
         <div className="login-loading-content">
-          <div className="login-logo animate-pulse">
-            C
-          </div>
+          <FolioLogo pulse />
           <span className="login-brand-title">Folio</span>
           <span className="login-loading-text">Loading session...</span>
         </div>
@@ -238,7 +241,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
     if (isNativeMobile && mobileSetupMode === null) {
       return (
         <div className="login-page-container mobile-setup-choice-page"><div className="glass-card login-card mobile-setup-choice-card">
-          <div className="login-header"><div className="login-logo">F</div><p className="text-muted-color mobile-setup-kicker">FOLIO ANDROID</p><h1 className="login-title">How should this phone begin?</h1><p className="login-subtitle">Connect to your existing Folio Desktop or create a separate workspace stored only on this phone.</p></div>
+          <div className="login-header"><FolioLogo /><p className="text-muted-color mobile-setup-kicker">FOLIO ANDROID</p><h1 className="login-title">How should this phone begin?</h1><p className="login-subtitle">Connect to your existing Folio Desktop or create a separate workspace stored only on this phone.</p></div>
           <div className="mobile-setup-options">
             <button type="button" className="mobile-setup-option" onClick={() => setMobileSetupMode("connect")}><strong>Connect to Folio Desktop</strong><span>Scan the pairing QR shown in Desktop Settings.</span></button>
             <button type="button" className="mobile-setup-option" onClick={() => setMobileSetupMode("local")}><strong>Create on this phone</strong><span>Start an independent, offline Folio workspace.</span></button>
@@ -249,7 +252,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
     if (isNativeMobile && mobileSetupMode === "connect") {
       return (
         <div className="login-page-container mobile-pair-page"><div className="glass-card login-card mobile-pair-card">
-          <div className="login-header"><div className="login-logo">F</div><p className="text-muted-color mobile-setup-kicker">PAIR WITH DESKTOP</p><h1 className="login-title">Connect this phone</h1><p className="login-subtitle">In Folio Desktop, open Settings → Mobile Devices &amp; Sync → Pair New Device.</p></div>
+          <div className="login-header"><FolioLogo /><p className="text-muted-color mobile-setup-kicker">PAIR WITH DESKTOP</p><h1 className="login-title">Connect this phone</h1><p className="login-subtitle">In Folio Desktop, open Settings → Mobile Devices &amp; Sync → Pair New Device.</p></div>
           {pairingError && <div className="login-error-badge">{pairingError}</div>}
           <button type="button" className="btn btn-primary btn-full-width" onClick={scanDesktopPairingCode}>Scan Desktop QR</button>
           <div className="mobile-pair-divider"><span>or enter manually</span></div>
@@ -279,7 +282,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         <div className="login-page-container">
           <div className="glass-card login-card" style={{ maxWidth: "560px" }}>
             <div className="login-header">
-              <div className="login-logo">F</div>
+              <FolioLogo />
               <p className="text-muted-color" style={{ fontSize: "0.72rem" }}>FIRST-RUN SETUP · {setupStep + 1} OF 3</p>
               <h1 className="login-title">{page.title}</h1>
               <p className="login-subtitle" style={{ lineHeight: 1.7 }}>{page.body}</p>
@@ -303,7 +306,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
       <div className="login-page-container">
         <div className="glass-card login-card" style={{ maxWidth: "560px" }}>
           <div className="login-header">
-            <div className="login-logo">F</div>
+            <FolioLogo />
             <p className="text-muted-color" style={{ fontSize: "0.72rem" }}>FIRST-RUN SETUP · 3 OF 3</p>
             <h1 className="login-title">Create your workspace</h1>
             <p className="login-subtitle">This account becomes the local owner of Folio.</p>
@@ -350,9 +353,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         <div className="login-split">
         <div className="glass-card login-card login-card-panel">
           <div className="login-header">
-            <div className="login-logo">
-              F
-            </div>
+            <FolioLogo />
             <h1 className="login-title">
               Folio Login
             </h1>
