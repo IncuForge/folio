@@ -5177,3 +5177,51 @@ small {
 .brand-text-lg {
   font-size: 1.35rem !important;
 }
+/* Keep the desktop workspace left-anchored with a constant compact sidebar gutter. */
+@media (min-width: 1024px) {
+  .desktop-shell .main-content {
+    flex: 0 0 auto;
+    width: calc(100% - 260px);
+    max-width: none;
+    margin-left: 260px;
+    padding-inline: 1.5rem;
+  }
+
+  .desktop-shell .sidebar-collapsed .main-content {
+    width: calc(100% - 64px);
+    max-width: none;
+    margin-left: 64px;
+  }
+
+  .desktop-shell :is(
+    .orders-container,
+    .dashboard-container,
+    .reports-container,
+    .settings-container,
+    .library-container,
+    .order-form-container,
+    .calendar-container,
+    .view-shell
+  ) {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    align-self: stretch;
+  }
+
+  .desktop-shell .main-content {
+    transition-property: margin-left, width !important;
+  }
+
+  .sidebar-item-icon {
+    flex: 0 0 20px;
+  }
+
+  .brand-icon-lg {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex: 0 0 32px;
+    aspect-ratio: 1;
+  }
+}
