@@ -1,20 +1,28 @@
+import { useEffect, useState } from "react";
 import { Minus, Search, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const appWindow = getCurrentWindow();
 
 export default function DesktopTitleBar() {
+  const [authenticated, setAuthenticated] = useState(false);
   const agent = navigator.userAgent.toLowerCase();
   const isWindows = agent.includes("windows");
   const isMac = agent.includes("macintosh") || agent.includes("mac os");
+  useEffect(() => {
+    const update = (event: Event) => setAuthenticated(Boolean((event as CustomEvent<{ authenticated?: boolean }>).detail?.authenticated));
+    window.addEventListener("folio-auth-state", update);
+    return () => window.removeEventListener("folio-auth-state", update);
+  }, []);
+
   if (!isWindows && !isMac) return null;
 
   return (
     <div className={"desktop-titlebar " + (isMac ? "desktop-titlebar-mac" : "")} data-tauri-drag-region>
-      <div className="desktop-titlebar-brand" data-tauri-drag-region>Folio</div>
-      <button type="button" className="desktop-titlebar-search" onClick={() => window.dispatchEvent(new CustomEvent("folio-open-command-palette"))} aria-label="Search Folio">
+      <span className="desktop-titlebar-drag-space" data-tauri-drag-region />
+      {authenticated && <button type="button" className="desktop-titlebar-search" onClick={() => window.dispatchEvent(new CustomEvent("folio-open-command-palette"))} aria-label="Search Folio">
         <Search size={13} /><span>Search Folio</span><kbd>Ctrl K</kbd>
-      </button>
+      </button>}
       {isWindows && (
         <div className="desktop-window-controls">
           <button type="button" aria-label="Minimize" onClick={() => appWindow.minimize()}><Minus size={14} /></button>

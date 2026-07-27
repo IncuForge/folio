@@ -45,6 +45,12 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   const [pairingLoading, setPairingLoading] = useState(false);
   const isNativeMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("folio-auth-state", {
+      detail: { authenticated: !authLoading && Boolean(currentUser) },
+    }));
+  }, [authLoading, currentUser]);
+
   // Load configuration and verify session on mount
   useEffect(() => {
     try {

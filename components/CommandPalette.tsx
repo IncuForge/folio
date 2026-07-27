@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search, Plus, Settings, ClipboardList, Utensils, Users, X } from "lucide-react";
+import { Search, Plus, Settings, ClipboardList, Utensils, Users, X, LayoutDashboard, CalendarRange, TrendingUp } from "lucide-react";
 
 type SearchResult = { type: "contact" | "item" | "order"; id: string; title: string; subtitle?: string };
 
@@ -44,10 +44,16 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
       <div className="command-palette">
         <div className="command-palette-input"><Search size={18}/><input ref={input} value={query} onChange={(event)=>setQuery(event.target.value)} placeholder="Search clients, events, dishes, venues or phone numbers…" aria-label="Search Folio"/><button onClick={()=>setOpen(false)} aria-label="Close search"><X size={17}/></button></div>
         {query.length < 2 ? <div className="command-list">
-          <button onClick={()=>go("order-form")}><Plus size={17}/><span><strong>Create order</strong><small>Ctrl N</small></span></button>
-          <button onClick={()=>go("orders")}><ClipboardList size={17}/><span><strong>Open Orders Book</strong></span></button>
-          <button onClick={()=>go("library")}><Utensils size={17}/><span><strong>Open Food Library</strong></span></button>
-          <button onClick={()=>go("settings")}><Settings size={17}/><span><strong>Open Settings</strong></span></button>
+          <p className="command-section-label">Quick action</p>
+          <button onClick={()=>go("order-form")}><Plus size={17}/><span><strong>Create a new order</strong><small>Start an event booking</small></span><kbd>Ctrl N</kbd></button>
+          <p className="command-section-label">Go to</p>
+          <button onClick={()=>go("dashboard")}><LayoutDashboard size={17}/><span><strong>Dashboard</strong><small>Business overview</small></span></button>
+          <button onClick={()=>go("orders")}><ClipboardList size={17}/><span><strong>Orders Book</strong><small>Bookings and billing</small></span></button>
+          <button onClick={()=>go("contacts")}><Users size={17}/><span><strong>Customers & Contacts</strong><small>Client records</small></span></button>
+          <button onClick={()=>go("calendar")}><CalendarRange size={17}/><span><strong>Calendar</strong><small>Event schedule</small></span></button>
+          <button onClick={()=>go("library")}><Utensils size={17}/><span><strong>Food Library</strong><small>Dishes and package kits</small></span></button>
+          <button onClick={()=>go("reports")}><TrendingUp size={17}/><span><strong>Reports</strong><small>Revenue and performance</small></span></button>
+          <button onClick={()=>go("settings")}><Settings size={17}/><span><strong>Settings</strong><small>Backups, users, sync, and updates</small></span></button>
         </div> : <div className="command-list" aria-live="polite">
           {results.map((result)=><button key={`${result.type}:${result.id}`} onClick={()=>go(result.type==="item"?"library":result.type==="order"?"orders":"contacts")}>
             {result.type==="contact"?<Users size={17}/>:result.type==="item"?<Utensils size={17}/>:<ClipboardList size={17}/>}<span><strong>{result.title}</strong><small>{result.subtitle}</small></span><em>{result.type}</em>
