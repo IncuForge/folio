@@ -1,3 +1,5 @@
+@import "@fontsource-variable/manrope";
+
 /* app/globals.css - Custom Handcrafted Paper Menu Design System */
 
 :root {
@@ -24,7 +26,7 @@
   --info-bg: rgba(30, 58, 138, 0.1);
   --info-text: #1e3a8a;
 
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Manrope Variable", "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: var(--font-sans);
 
   --radius-sm: 4px;
@@ -74,9 +76,10 @@ h6 {
 }
 
 h1 {
-  font-family: var(--font-instrument-serif), "Georgia", serif !important;
-  font-style: italic !important;
-  font-weight: 700 !important;
+  font-family: var(--font-display) !important;
+  font-style: normal !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.035em;
 }
 
 p {
@@ -1454,6 +1457,17 @@ body {
 
   .settings-panel-backup,
   .settings-grid > .settings-panel-disabled:first-child { grid-row: span 2; }
+
+  .settings-panel-backup {
+    align-self: stretch;
+    height: 100%;
+  }
+
+  .settings-panel-backup .settings-panel-section:last-child { flex: 1; }
+
+  .settings-panel-backup .settings-panel-section:last-child .btn:last-child {
+    margin-top: auto;
+  }
 }
 
 .settings-panel {
@@ -3567,7 +3581,7 @@ body {
 @keyframes tabFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
 
   to {
@@ -3577,9 +3591,31 @@ body {
 }
 
 .tab-content-animate {
-  animation: tabFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: tabFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   width: 100%;
 }
+
+@keyframes surfaceReveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content-animate :is(
+  .glass-card,
+  .empty-state-card,
+  .calendar-grid
+) {
+  animation: surfaceReveal 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tab-content-animate :is(.settings-grid, .dashboard-stats-grid) > :nth-child(2) { animation-delay: 35ms; }
+.tab-content-animate :is(.settings-grid, .dashboard-stats-grid) > :nth-child(3) { animation-delay: 70ms; }
+
+.desktop-shell .glass-card {
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease !important;
+}
+
+.desktop-shell .glass-card:hover { transform: translateY(-1px); }
 
 /* Hover Micro-interactions */
 .dashboard-card,
