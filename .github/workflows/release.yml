@@ -70,3 +70,54 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+  publish-android:
+    name: Android ARM64 debug APK
+    needs: publish-desktop
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: true
+
+      - name: Install Rust with Android target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install locked frontend dependencies
+        run: npm ci
+
+      - name: Initialize Android project
+        run: npm run android:init -- --ci
+
+      - name: Match Android system bars to Folio
+        run: npm run android:patch
+
+      - name: Build Android debug APK
+        run: npm run android:build -- --debug --target aarch64 --split-per-abi
+
+      - name: Attach Android APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          fail_on_unmatched_files: true
