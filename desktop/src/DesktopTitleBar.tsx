@@ -1,4 +1,4 @@
-import { Minus, Square, X } from "lucide-react";
+import { Minus, Search, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const appWindow = getCurrentWindow();
@@ -12,6 +12,9 @@ export default function DesktopTitleBar() {
   return (
     <div className={"desktop-titlebar " + (isMac ? "desktop-titlebar-mac" : "")} data-tauri-drag-region>
       <div className="desktop-titlebar-brand" data-tauri-drag-region>Folio</div>
+      <button type="button" className="desktop-titlebar-search" onClick={() => window.dispatchEvent(new CustomEvent("folio-open-command-palette"))} aria-label="Search Folio">
+        <Search size={13} /><span>Search Folio</span><kbd>Ctrl K</kbd>
+      </button>
       {isWindows && (
         <div className="desktop-window-controls">
           <button type="button" aria-label="Minimize" onClick={() => appWindow.minimize()}><Minus size={14} /></button>

@@ -4772,15 +4772,75 @@ html {
   width: clamp(8rem, 16vw, 15rem);
   aspect-ratio: 1;
   pointer-events: none;
-  background: url("/brand/incuforge-if-black-solid.svg") center / contain no-repeat;
+  background: url("../public/brand/incuforge-if-black-solid.svg") center / contain no-repeat;
   opacity: 0.022;
 }
-.dark .incuforge-watermark { background-image: url("/brand/incuforge-if-white-solid.svg"); opacity: 0.03; }
+.dark .incuforge-watermark { background-image: url("../public/brand/incuforge-if-white-solid.svg"); opacity: 0.03; }
 .main-content,.sidebar,.mobile-header,.mobile-bottom-nav { position: relative; z-index: 1; }
 .login-attribution-panel { position: relative; isolation: isolate; overflow: hidden; }
 .login-attribution-panel > *:not(.login-brand-watermark) { position: relative; z-index: 1; }
-.login-brand-watermark { position:absolute;z-index:0;width:24rem;aspect-ratio:1;right:-7rem;bottom:-7rem;background:url("/brand/incuforge-if-white-solid.svg") center/contain no-repeat;opacity:.045;pointer-events:none;transform:rotate(-3deg); }
+.login-brand-watermark { position:absolute;z-index:0;width:24rem;aspect-ratio:1;right:-7rem;bottom:-7rem;background:url("../public/brand/incuforge-if-white-solid.svg") center/contain no-repeat;opacity:.045;pointer-events:none;transform:rotate(-3deg); }
 @media(max-width:1023px){.incuforge-watermark{width:9rem;right:-1.5rem;bottom:5rem;opacity:.018}}
 @media(prefers-reduced-transparency:reduce){.incuforge-watermark,.login-brand-watermark{display:none}}
 
 .draft-status{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.75rem 0 1rem;padding:.65rem .8rem;border:1px solid var(--glass-border);background:var(--card-bg);color:var(--text-muted);font-size:.76rem}.draft-status>div{display:flex;gap:.45rem}.draft-status .btn{min-height:2rem;padding:.3rem .6rem;font-size:.72rem}@media(max-width:680px){.draft-status{align-items:stretch;flex-direction:column}.draft-status>div{display:grid;grid-template-columns:1fr 1fr}}
+
+/* Desktop chrome search belongs to the window furniture, not page content. */
+.desktop-titlebar-search {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  transform: translateX(-50%);
+  width: clamp(15rem, 34vw, 27rem);
+  height: 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .5rem;
+  padding: 0 .7rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--card-bg) 82%, transparent);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: .72rem;
+  text-align: left;
+}
+.desktop-titlebar-search:hover { border-color: var(--text-muted); background: var(--card-bg); }
+.desktop-titlebar-search:focus-visible { outline: 2px solid var(--focus-ring, #4979d1); outline-offset: -1px; }
+.desktop-titlebar-search kbd { font: inherit; font-size: .64rem; opacity: .75; }
+.desktop-titlebar-mac .desktop-titlebar-search { left: calc(50% + 24px); }
+
+/* Shared page rhythm for newly introduced operational views. */
+.view-shell { width: 100%; max-width: 100%; display: grid; align-content: start; gap: 1.25rem; }
+.view-header { min-height: 4.75rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; padding: .1rem 0 .15rem; }
+.view-header > div { min-width: 0; }
+.view-header h1 { margin: 0; font-size: clamp(1.65rem, 2vw, 2rem); line-height: 1.12; letter-spacing: -.025em; }
+.view-header p { max-width: 48rem; margin: .55rem 0 0; color: var(--text-muted); line-height: 1.5; }
+.view-header > .btn { flex: 0 0 auto; margin-top: .15rem; }
+.contacts-toolbar { margin: 0; padding: 1rem 1.1rem; }
+.contacts-grid { align-items: start; }
+.empty-state-box { min-height: clamp(18rem, 48vh, 30rem); background: color-mix(in srgb, var(--card-bg) 55%, transparent); }
+
+/* Visible but quiet product attribution. */
+.incuforge-watermark {
+  z-index: 3;
+  right: 1.5rem;
+  bottom: 3.1rem;
+  width: 7.5rem;
+  opacity: .075;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: .15rem;
+}
+.incuforge-watermark span { transform: translateY(1.15rem); white-space: nowrap; color: var(--text-main); font-size: .58rem; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+.dark .incuforge-watermark { opacity: .09; }
+
+@media(max-width:1023px){
+  .desktop-titlebar-search{display:none}
+  .view-header{min-height:0;gap:1rem}
+  .incuforge-watermark{width:5.25rem;right:.75rem;bottom:4.1rem;opacity:.05}
+  .incuforge-watermark span{display:none}
+}
+@media(max-width:680px){.view-header{display:grid}.view-header>.btn{width:100%}.contacts-toolbar{padding:.75rem}.empty-state-box{min-height:16rem}}

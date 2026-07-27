@@ -412,7 +412,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={`app-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-      <div className="incuforge-watermark" aria-hidden="true" />
+      <div className="incuforge-watermark" aria-hidden="true"><span>Built by IncuForge</span></div>
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 

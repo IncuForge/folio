@@ -21,6 +21,11 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
     return () => window.removeEventListener("keydown", keydown);
   }, [navigate]);
 
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener("folio-open-command-palette", show);
+    return () => window.removeEventListener("folio-open-command-palette", show);
+  }, []);
   useEffect(() => { if (open) window.setTimeout(() => input.current?.focus(), 0); }, [open]);
   useEffect(() => {
     const timer = window.setTimeout(async () => {
@@ -32,7 +37,7 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
   }, [query]);
 
   const go = (tab: string) => { navigate(tab); setOpen(false); setQuery(""); };
-  if (!open) return <button className="command-palette-trigger" onClick={() => setOpen(true)} aria-label="Open global search"><Search size={15}/><span>Search</span><kbd>Ctrl K</kbd></button>;
+  if (!open) return /android|iphone|ipad|ipod/i.test(navigator.userAgent) ? <button className="command-palette-trigger" onClick={() => setOpen(true)} aria-label="Open global search"><Search size={15}/><span>Search</span></button> : null;
 
   return (
     <div className="command-palette-backdrop" role="dialog" aria-modal="true" aria-label="Search Folio" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
