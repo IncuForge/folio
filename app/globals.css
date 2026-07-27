@@ -4922,3 +4922,44 @@ html {
   font: inherit;
   font-size: .67rem;
 }
+
+/* Final desktop chrome geometry: keep authentication and app states distinct. */
+.desktop-titlebar {
+  border-bottom: 1px solid var(--border-ink);
+}
+.desktop-titlebar-login {
+  border-bottom-color: transparent;
+}
+.desktop-titlebar-authenticated .desktop-titlebar-search {
+  border: 1px solid var(--border-ink);
+  background: var(--bg-card);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.desktop-titlebar-authenticated .desktop-titlebar-search:hover {
+  border-color: var(--border-strong);
+}
+.command-palette {
+  border: 1px solid var(--border-strong) !important;
+  outline: 1px solid color-mix(in srgb, var(--border-strong) 28%, transparent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .sidebar-collapsed .sidebar-header {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .sidebar-collapsed .sidebar-brand {
+    justify-content: center;
+    gap: 0;
+  }
+  .sidebar-collapsed .sidebar-nav,
+  .sidebar-collapsed .sidebar-bottom-container {
+    padding-inline: 7px;
+  }
+  .sidebar-collapsed .sidebar-item-btn {
+    justify-content: center;
+    gap: 0;
+    padding-inline: 0;
+  }
+}

@@ -18,7 +18,7 @@ export default function DesktopTitleBar() {
   if (!isWindows && !isMac) return null;
 
   return (
-    <div className={"desktop-titlebar " + (isMac ? "desktop-titlebar-mac" : "")} data-tauri-drag-region>
+    <div className={`desktop-titlebar ${isMac ? "desktop-titlebar-mac" : ""} ${authenticated ? "desktop-titlebar-authenticated" : "desktop-titlebar-login"}`} data-tauri-drag-region>
       <span className="desktop-titlebar-drag-space" data-tauri-drag-region />
       {authenticated && <button type="button" className="desktop-titlebar-search" onClick={() => window.dispatchEvent(new CustomEvent("folio-open-command-palette"))} aria-label="Search Folio">
         <Search size={13} /><span>Search Folio</span><kbd>Ctrl K</kbd>
