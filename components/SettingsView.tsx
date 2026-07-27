@@ -890,7 +890,7 @@ export default function SettingsView() {
                       <React.Fragment key={user.id}>
                         <tr className="table-body-row">
                           <td className="td-cell font-semibold">
-                            {user.email} {isSelf && <span className="text-[10px] text-[var(--ink-muted)] italic font-normal">(You)</span>}
+                            {user.email} {isSelf && <span className="text-[10px] text-[var(--ink-muted)] font-normal">(You)</span>}
                           </td>
                           <td className="td-cell">
                             <span className={`status-badge ${user.role === "admin" ? "status-confirmed" : "status-pending"}`}>

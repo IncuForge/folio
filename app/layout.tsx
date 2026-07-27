@@ -1,20 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { AppContextProvider } from "@/lib/AppContext";
 import ClientAppLayout from "./ClientAppLayout";
 import Script from "next/script";
-
-const inter = Inter({
-  subsets: ["latin"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
-});
 
 export const metadata: Metadata = {
   title: "Folio — Catering Operations Platform",
@@ -27,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.className} ${instrumentSerif.variable}`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Script id="error-logger" strategy="beforeInteractive">
           {`

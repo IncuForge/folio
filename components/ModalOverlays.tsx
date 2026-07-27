@@ -656,7 +656,7 @@ export default function ModalOverlays() {
                     {selectedOrder.items.map((it) => (
                       <li key={it.item_id}>
                         <span className="text-primary-color">{it.name}</span> ({it.quantity} servings) 
-                        {it.item_notes && <span className="text-muted-color italic-small"> &mdash; &ldquo;{it.item_notes}&rdquo;</span>}
+                        {it.item_notes && <span className="text-muted-color item-note-text"> &mdash; &ldquo;{it.item_notes}&rdquo;</span>}
                       </li>
                     ))}
                   </ul>
@@ -725,7 +725,7 @@ export default function ModalOverlays() {
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
                       </div>
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="milestone-edit-actions">
                         <button 
                           type="button" 
                           className="btn btn-primary btn-xs"
@@ -748,7 +748,7 @@ export default function ModalOverlays() {
                         {renderPaymentNotes(selectedOrder.booking_payment_notes || "")}
                       </div>
                       {!isManager && (
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div className="milestone-note-actions">
                           <button 
                             type="button" 
                             className="btn btn-secondary btn-xs py-0.5 px-2"
@@ -835,7 +835,7 @@ export default function ModalOverlays() {
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
                       </div>
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="milestone-edit-actions">
                         <button 
                           type="button" 
                           className="btn btn-primary btn-xs"
@@ -858,7 +858,7 @@ export default function ModalOverlays() {
                         {renderPaymentNotes(selectedOrder.second_payment_notes || "")}
                       </div>
                       {!isManager && (
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div className="milestone-note-actions">
                           <button 
                             type="button" 
                             className="btn btn-secondary btn-xs py-0.5 px-2"
@@ -945,7 +945,7 @@ export default function ModalOverlays() {
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
                       </div>
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="milestone-edit-actions">
                         <button 
                           type="button" 
                           className="btn btn-primary btn-xs"
@@ -968,7 +968,7 @@ export default function ModalOverlays() {
                         {renderPaymentNotes(selectedOrder.final_payment_notes || "")}
                       </div>
                       {!isManager && (
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div className="milestone-note-actions">
                           <button 
                             type="button" 
                             className="btn btn-secondary btn-xs py-0.5 px-2"
