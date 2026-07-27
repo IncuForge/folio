@@ -266,10 +266,11 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   if (!currentUser) {
     return (
       <div className="login-page-container">
-        <div className="glass-card login-card">
+        <div className="login-split">
+        <div className="glass-card login-card login-card-panel">
           <div className="login-header">
             <div className="login-logo">
-              C
+              F
             </div>
             <h1 className="login-title">
               Folio Login
@@ -316,9 +317,19 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
           </form>
         </div>
 
-        <footer className="app-footer" style={{ position: "fixed", bottom: "1.5rem", left: 0, right: 0, border: "none" }}>
-          Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" className="underline-link">IncuForge</a> @ 2026
-        </footer>
+        <aside className="login-attribution-panel">
+          <span className="login-attribution-kicker">LOCAL-FIRST CATERING OPERATIONS</span>
+          <div>
+            <h2 className="login-attribution-title">Built thoughtfully for teams that run real events.</h2>
+            <p className="login-attribution-copy">Folio keeps bookings, menus, collections, kitchen preparation, and portable backups together on your own computer.</p>
+          </div>
+          <div className="login-attribution-credit">
+            <span>Designed &amp; developed by</span>
+            <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer">IncuForge</a>
+            <span>© 2026</span>
+          </div>
+        </aside>
+        </div>
       </div>
     );
   }
