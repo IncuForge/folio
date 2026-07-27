@@ -48,6 +48,12 @@ export default function SettingsView() {
   const [updateNotes, setUpdateNotes] = useState("");
   const [updateMessage, setUpdateMessage] = useState("Check GitHub Releases for a newer signed build.");
   const pendingUpdateRef = React.useRef<any>(null);
+  const [syncAddress, setSyncAddress] = useState("");
+  const [pairedDevices, setPairedDevices] = useState<string[]>([]);
+  const [pairingCode, setPairingCode] = useState("");
+  const [pairingExpiresAt, setPairingExpiresAt] = useState(0);
+  const [pairingQr, setPairingQr] = useState("");
+  const [pairingLoading, setPairingLoading] = useState(false);
 
   useEffect(() => {
     setLocalBrandName(pdfBrandName || "");
@@ -70,6 +76,13 @@ export default function SettingsView() {
     setIsDesktopRuntime(desktop);
     if (desktop) {
       import("@tauri-apps/api/app").then(({ getVersion }) => getVersion()).then(setCurrentVersion).catch(() => undefined);
+      import("@tauri-apps/api/core")
+        .then(({ invoke }) => invoke<{ address: string; pairedDevices: string[] }>("sync_status"))
+        .then((status) => {
+          setSyncAddress(status.address);
+          setPairedDevices(status.pairedDevices);
+        })
+        .catch(() => undefined);
     }
   }, []);
 
@@ -342,6 +355,38 @@ export default function SettingsView() {
     }
   };
 
+  const loadSyncStatus = async () => {
+    if (!("__TAURI_INTERNALS__" in window) || /android|iphone|ipad|ipod/i.test(navigator.userAgent)) return;
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const status = await invoke<{ running: boolean; address: string; pairedDevices: string[] }>("sync_status");
+      setSyncAddress(status.address);
+      setPairedDevices(status.pairedDevices || []);
+    } catch (error) {
+      console.error("Could not read sync status", error);
+    }
+  };
+
+  const createPairingCode = async () => {
+    setPairingLoading(true);
+    setErrorMsg("");
+    try {
+      const backupResponse = await fetch("/api/export/backup");
+      if (!backupResponse.ok) throw new Error("Could not prepare a desktop snapshot.");
+      const snapshot = await backupResponse.json();
+      const [{ invoke }, QRCode] = await Promise.all([import("@tauri-apps/api/core"), import("qrcode")]);
+      const pairing = await invoke<{ address: string; code: string; expiresAt: number; payload: string }>("sync_create_pairing", { snapshot });
+      setSyncAddress(pairing.address);
+      setPairingCode(pairing.code);
+      setPairingExpiresAt(pairing.expiresAt);
+      setPairingQr(await QRCode.toDataURL(pairing.payload, { width: 220, margin: 1, color: { dark: "#111318", light: "#ffffff" } }));
+      await loadSyncStatus();
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Could not create a pairing code.");
+    } finally {
+      setPairingLoading(false);
+    }
+  };
   const eraseLocalData = async () => {
     const confirmation = window.prompt(
       "This permanently removes all Folio orders, library items, packages, users, settings, and automatic backups from this computer. Type DELETE to continue."
@@ -649,6 +694,31 @@ export default function SettingsView() {
             </div>
           </div>
           <button type="button" className="btn btn-danger" onClick={eraseLocalData}>Erase All Local Data</button>
+        </div>
+      )}
+      {isDesktopRuntime && isAdmin && (
+        <div className="glass-card sync-pairing-panel">
+          <div className="sync-pairing-copy">
+            <span className="settings-update-icon"><RefreshCw size={18} /></span>
+            <div>
+              <h3>Mobile Devices &amp; Sync</h3>
+              <p>Pair Folio Android on the same network. Pairing codes expire after five minutes.</p>
+              <span className="sync-address">{syncAddress || "Starting local sync service…"}</span>
+            </div>
+          </div>
+          <div className="sync-pairing-actions">
+            {pairingQr ? (
+              <div className="sync-qr-block">
+                <img src={pairingQr} alt="Folio mobile pairing QR code" />
+                <div><strong>{pairingCode}</strong><span>Expires {new Date(pairingExpiresAt * 1000).toLocaleTimeString()}</span></div>
+              </div>
+            ) : (
+              <button type="button" className="btn btn-primary" disabled={pairingLoading} onClick={createPairingCode}>
+                {pairingLoading ? "Preparing…" : "Pair New Device"}
+              </button>
+            )}
+            {pairedDevices.length > 0 && <p className="sync-device-count">{pairedDevices.length} paired device{pairedDevices.length === 1 ? "" : "s"}</p>}
+          </div>
         </div>
       )}
       {/* User Management Section - Visible to Admins Only */}

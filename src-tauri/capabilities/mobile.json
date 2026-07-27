@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
-  "description": "Folio Android local database, backup, dialogs, and external links",
+  "description": "Folio Android local database, backup, dialogs, external links, and paired desktop sync",
   "platforms": ["android", "iOS"],
   "windows": ["main"],
   "permissions": [
@@ -12,6 +12,16 @@
     "dialog:default",
     "fs:default",
     "fs:allow-appdata-write-recursive",
-    "opener:default"
+    "opener:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "http://*:*" },
+        { "url": "https://*:*" }
+      ]
+    },
+    "barcode-scanner:allow-scan",
+    "barcode-scanner:allow-check-permissions",
+    "barcode-scanner:allow-request-permissions"
   ]
 }

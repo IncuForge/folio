@@ -37,6 +37,12 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   const [loginPassword, setLoginPassword] = useState<string>("");
   const [loginError, setLoginError] = useState<string>("");
   const [showGuide, setShowGuide] = useState(false);
+  const [mobileSetupMode, setMobileSetupMode] = useState<"local" | "connect" | null>(null);
+  const [pairingAddress, setPairingAddress] = useState("");
+  const [pairingCode, setPairingCode] = useState("");
+  const [pairingError, setPairingError] = useState("");
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const isNativeMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
   // Load configuration and verify session on mount
   useEffect(() => {
@@ -161,6 +167,38 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
     }
   };
 
+  const scanDesktopPairingCode = async () => {
+    setPairingError("");
+    try {
+      const scanner = await import("@tauri-apps/plugin-barcode-scanner");
+      const permission = await scanner.checkPermissions();
+      if (permission !== "granted" && await scanner.requestPermissions() !== "granted") throw new Error("Camera access is required to scan the desktop QR code.");
+      const result = await scanner.scan({ formats: [scanner.Format.QRCode], cameraDirection: "back" });
+      const payload = JSON.parse(result.content);
+      if (!payload.address || !payload.code) throw new Error("This is not a Folio pairing code.");
+      setPairingAddress(payload.address); setPairingCode(payload.code);
+    } catch (error) { setPairingError(error instanceof Error ? error.message : "The QR code could not be scanned."); }
+  };
+
+  const connectToDesktop = async () => {
+    setPairingLoading(true); setPairingError("");
+    try {
+      const address = pairingAddress.trim().replace(/\/$/, "");
+      if (!address || !pairingCode.trim()) throw new Error("Enter the desktop address and pairing code.");
+      const { fetch: mobileFetch } = await import("@tauri-apps/plugin-http");
+      const pairResponse = await mobileFetch(`${address}/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: pairingCode.trim(), deviceName: "Folio Android" }) });
+      const pairData = await pairResponse.json();
+      if (!pairResponse.ok) throw new Error(pairData.error || "The desktop rejected this pairing request.");
+      const snapshotResponse = await mobileFetch(`${address}${pairData.snapshotUrl}`, { headers: { Authorization: `Bearer ${pairData.deviceToken}` } });
+      const snapshotData = await snapshotResponse.json();
+      if (!snapshotResponse.ok) throw new Error(snapshotData.error || "The desktop snapshot could not be downloaded.");
+      const restoreResponse = await fetch("/api/setup/restore", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ backup: snapshotData.snapshot }) });
+      const restoreData = await restoreResponse.json();
+      if (!restoreResponse.ok) throw new Error(restoreData.error || "The desktop snapshot could not be restored.");
+      localStorage.setItem("folio-sync-address", address); localStorage.setItem("folio-sync-device-token", pairData.deviceToken); window.location.reload();
+    } catch (error) { setPairingError(error instanceof Error ? error.message : "Could not connect to Folio Desktop."); }
+    finally { setPairingLoading(false); }
+  };
   const handleSetSidebarCollapsed = (collapsed: boolean) => {
     setIsSidebarCollapsed(collapsed);
     localStorage.setItem("sidebar-collapsed", collapsed ? "true" : "false");
@@ -181,6 +219,33 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   }
 
   if (setupRequired) {
+    if (isNativeMobile && mobileSetupMode === null) {
+      return (
+        <div className="login-page-container mobile-setup-choice-page"><div className="glass-card login-card mobile-setup-choice-card">
+          <div className="login-header"><div className="login-logo">F</div><p className="text-muted-color mobile-setup-kicker">FOLIO ANDROID</p><h1 className="login-title">How should this phone begin?</h1><p className="login-subtitle">Connect to your existing Folio Desktop or create a separate workspace stored only on this phone.</p></div>
+          <div className="mobile-setup-options">
+            <button type="button" className="mobile-setup-option" onClick={() => setMobileSetupMode("connect")}><strong>Connect to Folio Desktop</strong><span>Scan the pairing QR shown in Desktop Settings.</span></button>
+            <button type="button" className="mobile-setup-option" onClick={() => setMobileSetupMode("local")}><strong>Create on this phone</strong><span>Start an independent, offline Folio workspace.</span></button>
+          </div>
+        </div></div>
+      );
+    }
+    if (isNativeMobile && mobileSetupMode === "connect") {
+      return (
+        <div className="login-page-container mobile-pair-page"><div className="glass-card login-card mobile-pair-card">
+          <div className="login-header"><div className="login-logo">F</div><p className="text-muted-color mobile-setup-kicker">PAIR WITH DESKTOP</p><h1 className="login-title">Connect this phone</h1><p className="login-subtitle">In Folio Desktop, open Settings → Mobile Devices &amp; Sync → Pair New Device.</p></div>
+          {pairingError && <div className="login-error-badge">{pairingError}</div>}
+          <button type="button" className="btn btn-primary btn-full-width" onClick={scanDesktopPairingCode}>Scan Desktop QR</button>
+          <div className="mobile-pair-divider"><span>or enter manually</span></div>
+          <div className="login-form">
+            <div className="form-group"><label className="form-label">Desktop address</label><input className="form-input" value={pairingAddress} onChange={(event) => setPairingAddress(event.target.value)} placeholder="http://192.168.1.20:47631" /></div>
+            <div className="form-group"><label className="form-label">Pairing code</label><input className="form-input" inputMode="numeric" value={pairingCode} onChange={(event) => setPairingCode(event.target.value)} placeholder="000000" /></div>
+            <button type="button" className="btn btn-primary btn-full-width" disabled={pairingLoading} onClick={connectToDesktop}>{pairingLoading ? "Connecting…" : "Connect & Import"}</button>
+            <button type="button" className="btn btn-secondary btn-full-width" onClick={() => setMobileSetupMode(null)}>Back</button>
+          </div>
+        </div></div>
+      );
+    }
     const pages = [
       {
         title: "Welcome to Folio",

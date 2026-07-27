@@ -49,6 +49,9 @@ jobs:
       - name: Initialize Android project
         run: npm run android:init -- --ci
 
+      - name: Match Android system bars to Folio
+        run: npm run android:patch
+
       - name: Build Android debug APK
         run: npm run android:build -- --debug --target aarch64 --split-per-abi
 

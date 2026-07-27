@@ -279,6 +279,13 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
     const [{ count }] = await database.select<Array<{ count: number }>>("SELECT COUNT(*) AS count FROM users");
     return json({ setupRequired: Number(count) === 0 });
   }
+  if (route === "/api/setup/restore" && method === "POST") {
+    const [{ count }] = await database.select<Array<{ count: number }>>("SELECT COUNT(*) AS count FROM users");
+    if (Number(count) !== 0) return json({ error: "This Folio installation is already configured." }, 409);
+    const backup = validateBackup(payload.backup);
+    await restoreDocument(backup);
+    return json({ ok: true });
+  }
   if (route === "/api/setup" && method === "POST") {
     const [{ count }] = await database.select<Array<{ count: number }>>("SELECT COUNT(*) AS count FROM users");
     if (Number(count) !== 0) return json({ error: "Folio has already been set up." }, 409);
