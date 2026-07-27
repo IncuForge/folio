@@ -4560,3 +4560,95 @@ html {
   .native-mobile-shell .empty-state-desc + .btn,
   .native-mobile-shell .empty-state-title + .btn { margin-top: 0.5rem; }
 }
+/* Coordinated sidebar reveal and collapse motion */
+@media (min-width: 1024px) {
+  .sidebar,
+  .main-content,
+  .sidebar-header,
+  .sidebar-nav,
+  .sidebar-bottom-container,
+  .sidebar-item-btn,
+  .sidebar-brand,
+  .sidebar-session-box {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .sidebar {
+    will-change: width;
+    transition-property: width !important;
+    transition-duration: 300ms !important;
+  }
+
+  .main-content {
+    will-change: margin-left, max-width;
+    transition-property: margin-left, max-width !important;
+    transition-duration: 300ms !important;
+  }
+
+  .sidebar-header {
+    transition: padding 300ms cubic-bezier(0.22, 1, 0.36, 1), justify-content 300ms step-end !important;
+  }
+
+  .sidebar-nav,
+  .sidebar-bottom-container {
+    transition: padding 300ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .sidebar-item-btn,
+  .sidebar-brand {
+    transition: gap 260ms cubic-bezier(0.22, 1, 0.36, 1), padding 300ms cubic-bezier(0.22, 1, 0.36, 1), background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+  }
+
+  .sidebar-header span,
+  .sidebar-item-btn span,
+  .sidebar-item-label,
+  .brand-text-lg,
+  .session-header,
+  .session-email,
+  .session-role {
+    display: inline-block !important;
+    visibility: visible !important;
+    transform: translateX(0);
+    transform-origin: left center;
+    transition: opacity 140ms ease, max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms cubic-bezier(0.22, 1, 0.36, 1), margin 260ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .sidebar-session-box {
+    display: flex !important;
+    max-height: 110px;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease, padding 260ms cubic-bezier(0.22, 1, 0.36, 1), margin 260ms cubic-bezier(0.22, 1, 0.36, 1), border-width 180ms ease !important;
+  }
+
+  .sidebar-collapsed .sidebar-header { justify-content: flex-start; padding-left: 16px; }
+  .sidebar-collapsed .sidebar-nav,
+  .sidebar-collapsed .sidebar-bottom-container { padding-inline: 7px; }
+  .sidebar-collapsed .sidebar-item-btn { justify-content: flex-start; gap: 0; padding-left: 14px; padding-right: 14px; }
+  .sidebar-collapsed .sidebar-brand { gap: 0; }
+
+  .sidebar-collapsed .sidebar-header span,
+  .sidebar-collapsed .sidebar-item-btn span,
+  .sidebar-collapsed .sidebar-item-label,
+  .sidebar-collapsed .brand-text-lg,
+  .sidebar-collapsed .session-header,
+  .sidebar-collapsed .session-email,
+  .sidebar-collapsed .session-role {
+    visibility: visible !important;
+    opacity: 0;
+    max-width: 0;
+    transform: translateX(-6px);
+  }
+
+  .sidebar-collapsed .sidebar-session-box {
+    display: flex !important;
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    border-width: 0;
+    pointer-events: none;
+  }
+}
