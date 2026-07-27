@@ -37,7 +37,7 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
   }, [query]);
 
   const go = (tab: string) => { navigate(tab); setOpen(false); setQuery(""); };
-  if (!open) return /android|iphone|ipad|ipod/i.test(navigator.userAgent) ? <button className="command-palette-trigger" onClick={() => setOpen(true)} aria-label="Open global search"><Search size={15}/><span>Search</span></button> : null;
+  if (!open) return null;
 
   return (
     <div className="command-palette-backdrop" role="dialog" aria-modal="true" aria-label="Search Folio" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
