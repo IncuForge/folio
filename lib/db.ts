@@ -155,6 +155,17 @@ export function initDb() {
     );
   `);
   
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY,name TEXT NOT NULL,phone TEXT DEFAULT '',email TEXT DEFAULT '',address TEXT DEFAULT '',preferences TEXT DEFAULT '',allergens TEXT DEFAULT '[]',notes TEXT DEFAULT '',is_deleted INTEGER DEFAULT 0,created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS drafts (id TEXT PRIMARY KEY,user_id TEXT,draft_type TEXT NOT NULL,payload TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS attachments (id TEXT PRIMARY KEY,entity_type TEXT NOT NULL,entity_id TEXT NOT NULL,name TEXT NOT NULL,mime_type TEXT DEFAULT '',size INTEGER DEFAULT 0,storage_path TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS reminders (id TEXT PRIMARY KEY,entity_type TEXT NOT NULL,entity_id TEXT,title TEXT NOT NULL,due_at TEXT NOT NULL,status TEXT DEFAULT 'pending',recurrence TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP,completed_at TEXT);
+    CREATE TABLE IF NOT EXISTS saved_views (id TEXT PRIMARY KEY,user_id TEXT NOT NULL,view_type TEXT NOT NULL,name TEXT NOT NULL,config TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS recent_items (id TEXT PRIMARY KEY,user_id TEXT NOT NULL,entity_type TEXT NOT NULL,entity_id TEXT NOT NULL,accessed_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS audit_log (id TEXT PRIMARY KEY,user_id TEXT,action TEXT NOT NULL,entity_type TEXT NOT NULL,entity_id TEXT,before_json TEXT,after_json TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS undo_log (id TEXT PRIMARY KEY,user_id TEXT,action TEXT NOT NULL,inverse_json TEXT NOT NULL,expires_at TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS role_permissions (role TEXT NOT NULL,capability TEXT NOT NULL,allowed INTEGER DEFAULT 1,PRIMARY KEY(role,capability));
+  `);
   // Seed default settings if empty
   const settingsCount = db.prepare("SELECT COUNT(*) as count FROM settings").get() as any;
   if (settingsCount.count === 0) {
@@ -1203,7 +1214,7 @@ export { pgPool, supabase };
 export const isDirectPg = !!pgPool;
 
 export async function rawQuery(table: string) {
-  const allowedTables = ["items", "packages", "package_items", "orders", "order_items", "users", "settings"];
+  const allowedTables = ["items", "packages", "package_items", "orders", "order_items", "users", "settings", "contacts", "drafts", "attachments", "reminders", "saved_views", "recent_items", "audit_log", "undo_log", "role_permissions"];
   if (!allowedTables.includes(table)) {
     throw new Error("Invalid table query");
   }
@@ -1229,6 +1240,15 @@ const restoreColumns: Record<BackupTable, string[]> = {
   order_items: ["order_id", "item_id", "quantity", "notes"],
   users: ["id", "email", "password", "role", "created_at"],
   settings: ["key", "value"],
+  contacts: ["id","name","phone","email","address","preferences","allergens","notes","is_deleted","created_at","updated_at"],
+  drafts: ["id","user_id","draft_type","payload","created_at","updated_at"],
+  attachments: ["id","entity_type","entity_id","name","mime_type","size","storage_path","created_at"],
+  reminders: ["id","entity_type","entity_id","title","due_at","status","recurrence","created_at","completed_at"],
+  saved_views: ["id","user_id","view_type","name","config","created_at","updated_at"],
+  recent_items: ["id","user_id","entity_type","entity_id","accessed_at"],
+  audit_log: ["id","user_id","action","entity_type","entity_id","before_json","after_json","created_at"],
+  undo_log: ["id","user_id","action","inverse_json","expires_at","created_at"],
+  role_permissions: ["role","capability","allowed"],
 };
 
 /**
@@ -1243,10 +1263,10 @@ export async function restoreBackup(backup: FolioBackup): Promise<void> {
 
   const client = await pgPool.connect();
   const deleteOrder: BackupTable[] = [
-    "order_items", "package_items", "orders", "packages", "items", "settings", "users",
+    "order_items", "package_items", "attachments", "reminders", "drafts", "saved_views", "recent_items", "audit_log", "undo_log", "contacts", "orders", "packages", "items", "role_permissions", "settings", "users",
   ];
   const insertOrder: BackupTable[] = [
-    "items", "packages", "users", "settings", "orders", "package_items", "order_items",
+    "items", "packages", "users", "settings", "role_permissions", "contacts", "orders", "package_items", "order_items", "drafts", "attachments", "reminders", "saved_views", "recent_items", "audit_log", "undo_log",
   ];
 
   try {

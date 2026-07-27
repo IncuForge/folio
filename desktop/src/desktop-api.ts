@@ -1,5 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { BaseDirectory, mkdir, readDir, remove, writeTextFile } from "@tauri-apps/plugin-fs";
+import { runMigrations } from "./migrations";
 import { BACKUP_TABLES, FOLIO_BACKUP_FORMAT, FOLIO_BACKUP_VERSION, validateBackup, type FolioBackup } from "@/lib/backup";
 
 type Row = Record<string, any>;
@@ -189,6 +190,24 @@ async function setSettings(values: Row) {
   return allSettings();
 }
 
+async function writeAudit(action: string, entityType: string, entityId?: string, before?: unknown, after?: unknown) {
+  await database.execute(
+    "INSERT INTO audit_log(id,user_id,action,entity_type,entity_id,before_json,after_json) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+    [crypto.randomUUID(), sessionUser?.id || null, action, entityType, entityId || null, before === undefined ? null : JSON.stringify(before), after === undefined ? null : JSON.stringify(after)],
+  );
+}
+
+function contactRow(row: Row) {
+  return { ...row, allergens: parseJson(row.allergens), is_deleted: Boolean(row.is_deleted) };
+}
+
+async function contacts(search = "") {
+  const query = `%${search.trim()}%`;
+  const rows = search.trim()
+    ? await database.select<Row[]>("SELECT * FROM contacts WHERE is_deleted=0 AND (name LIKE $1 OR phone LIKE $1 OR email LIKE $1 OR address LIKE $1) ORDER BY name", [query])
+    : await database.select<Row[]>("SELECT * FROM contacts WHERE is_deleted=0 ORDER BY name");
+  return rows.map(contactRow);
+}
 export async function readSyncSnapshot(): Promise<FolioBackup> {
   const tables = {} as FolioBackup["tables"];
   for (const table of BACKUP_TABLES) tables[table] = await database.select<Row[]>("SELECT * FROM " + table);
@@ -254,12 +273,21 @@ const restoreColumns: Record<string, string[]> = {
   package_items: ["package_id","item_id"],
   orders: ["id", ...orderColumns, "created_at"], order_items: ["order_id","item_id","quantity","notes"],
   users: ["id","email","password","role","created_at"], settings: ["key","value"],
+  contacts: ["id","name","phone","email","address","preferences","allergens","notes","is_deleted","created_at","updated_at"],
+  drafts: ["id","user_id","draft_type","payload","created_at","updated_at"],
+  attachments: ["id","entity_type","entity_id","name","mime_type","size","storage_path","created_at"],
+  reminders: ["id","entity_type","entity_id","title","due_at","status","recurrence","created_at","completed_at"],
+  saved_views: ["id","user_id","view_type","name","config","created_at","updated_at"],
+  recent_items: ["id","user_id","entity_type","entity_id","accessed_at"],
+  audit_log: ["id","user_id","action","entity_type","entity_id","before_json","after_json","created_at"],
+  undo_log: ["id","user_id","action","inverse_json","expires_at","created_at"],
+  role_permissions: ["role","capability","allowed"],
 };
 
 export async function applySyncSnapshot(document: unknown) {
   const backup = validateBackup(document);
-  const deleteOrder = ["order_items","package_items","orders","packages","items","settings","users"];
-  const insertOrder = ["items","packages","users","settings","orders","package_items","order_items"];
+  const deleteOrder = ["order_items","package_items","attachments","reminders","drafts","saved_views","recent_items","audit_log","undo_log","contacts","orders","packages","items","role_permissions","settings","users"];
+  const insertOrder = ["items","packages","users","settings","role_permissions","contacts","orders","package_items","order_items","drafts","attachments","reminders","saved_views","recent_items","audit_log","undo_log"];
   await database.execute("PRAGMA foreign_keys = OFF");
   await database.execute("BEGIN IMMEDIATE");
   try {
@@ -335,7 +363,65 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
   const denied = authorized();
   if (denied) return denied;
 
-  if (route === "/api/settings" && method === "GET") return json(await allSettings());
+  if (route === "/api/search" && method === "GET") {
+    const query = String(url.searchParams.get("q") || "").trim();
+    if (query.length < 2) return json([]);
+    const like = `%${query}%`;
+    const [contactMatches, itemMatches, orderMatches] = await Promise.all([
+      database.select<Row[]>("SELECT id,name,phone,email FROM contacts WHERE is_deleted=0 AND (name LIKE $1 OR phone LIKE $1 OR email LIKE $1) LIMIT 12", [like]),
+      database.select<Row[]>("SELECT id,name,type FROM items WHERE is_deleted=0 AND (name LIKE $1 OR type LIKE $1 OR ingredients LIKE $1) LIMIT 12", [like]),
+      database.select<Row[]>("SELECT id,client_name,event_name,event_date,venue FROM orders WHERE client_name LIKE $1 OR event_name LIKE $1 OR venue LIKE $1 OR client_phone LIKE $1 LIMIT 12", [like]),
+    ]);
+    return json([
+      ...contactMatches.map((entry) => ({ type: "contact", id: entry.id, title: entry.name, subtitle: entry.phone || entry.email })),
+      ...itemMatches.map((entry) => ({ type: "item", id: entry.id, title: entry.name, subtitle: entry.type })),
+      ...orderMatches.map((entry) => ({ type: "order", id: entry.id, title: entry.event_name, subtitle: `${entry.client_name} · ${entry.event_date}` })),
+    ]);
+  }
+  if (route === "/api/contacts" && method === "GET") return json(await contacts(String(url.searchParams.get("q") || "")));
+  if (route === "/api/contacts" && method === "POST") {
+    const id = String(payload.id || crypto.randomUUID());
+    const row = [id,String(payload.name||"").trim(),String(payload.phone||""),String(payload.email||"").trim().toLowerCase(),String(payload.address||""),String(payload.preferences||""),JSON.stringify(payload.allergens||[]),String(payload.notes||"")];
+    if (!row[1]) return json({error:"Contact name is required."},400);
+    await database.execute("INSERT INTO contacts(id,name,phone,email,address,preferences,allergens,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", row);
+    const created = contactRow((await database.select<Row[]>("SELECT * FROM contacts WHERE id=$1",[id]))[0]);
+    await writeAudit("create","contact",id,undefined,created);
+    return json(created,201);
+  }
+  const contactMatch = route.match(/^\/api\/contacts\/([^/]+)$/);
+  if (contactMatch && method === "PATCH") {
+    const before = (await database.select<Row[]>("SELECT * FROM contacts WHERE id=$1",[contactMatch[1]]))[0];
+    if (!before) return json({error:"Contact not found."},404);
+    const allowed=["name","phone","email","address","preferences","allergens","notes"].filter((key)=>payload[key]!==undefined);
+    if (allowed.length) await database.execute("UPDATE contacts SET "+allowed.map((key,index)=>key+"=$"+(index+1)).join(",")+",updated_at=CURRENT_TIMESTAMP WHERE id=$"+(allowed.length+1),[...allowed.map((key)=>key==="allergens"?JSON.stringify(payload[key]||[]):payload[key]),contactMatch[1]]);
+    const updated=contactRow((await database.select<Row[]>("SELECT * FROM contacts WHERE id=$1",[contactMatch[1]]))[0]);
+    await writeAudit("update","contact",contactMatch[1],contactRow(before),updated);
+    return json(updated);
+  }
+  if (contactMatch && method === "DELETE") {
+    const before=(await database.select<Row[]>("SELECT * FROM contacts WHERE id=$1",[contactMatch[1]]))[0];
+    if(!before)return json({error:"Contact not found."},404);
+    await database.execute("UPDATE contacts SET is_deleted=1,updated_at=CURRENT_TIMESTAMP WHERE id=$1",[contactMatch[1]]);
+    await database.execute("INSERT INTO undo_log(id,user_id,action,inverse_json,expires_at) VALUES ($1,$2,'restore_contact',$3,$4)",[crypto.randomUUID(),sessionUser?.id||null,JSON.stringify(contactRow(before)),new Date(Date.now()+30000).toISOString()]);
+    await writeAudit("delete","contact",contactMatch[1],contactRow(before));
+    return json({ok:true,undoAvailableForSeconds:30});
+  }
+  if (route === "/api/drafts" && method === "GET") return json(await database.select("SELECT * FROM drafts WHERE user_id=$1 ORDER BY updated_at DESC",[sessionUser!.id]));
+  if (route === "/api/drafts" && method === "PUT") {
+    const id=String(payload.id||crypto.randomUUID());
+    await database.execute("INSERT INTO drafts(id,user_id,draft_type,payload) VALUES ($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=CURRENT_TIMESTAMP",[id,sessionUser!.id,String(payload.draftType||"order"),JSON.stringify(payload.payload||{})]);
+    return json({id,updatedAt:new Date().toISOString()});
+  }
+  const draftMatch=route.match(/^\/api\/drafts\/([^/]+)$/);
+  if(draftMatch&&method==="DELETE"){await database.execute("DELETE FROM drafts WHERE id=$1 AND user_id=$2",[draftMatch[1],sessionUser!.id]);return json({ok:true});}
+  if(route==="/api/reminders"&&method==="GET")return json(await database.select("SELECT * FROM reminders ORDER BY status,due_at"));
+  if(route==="/api/reminders"&&method==="POST"){
+    const id=crypto.randomUUID();await database.execute("INSERT INTO reminders(id,entity_type,entity_id,title,due_at,recurrence) VALUES ($1,$2,$3,$4,$5,$6)",[id,payload.entityType||"general",payload.entityId||null,payload.title,payload.dueAt,payload.recurrence||null]);await writeAudit("create","reminder",id);return json({id},201);
+  }
+  const reminderMatch=route.match(/^\/api\/reminders\/([^/]+)$/);
+  if(reminderMatch&&method==="PATCH"){await database.execute("UPDATE reminders SET status=$1,completed_at=$2 WHERE id=$3",[payload.status||"completed",payload.status==="pending"?null:new Date().toISOString(),reminderMatch[1]]);await writeAudit("update","reminder",reminderMatch[1]);return json({ok:true});}
+  if(route==="/api/audit"&&method==="GET"){const blocked=authorized("admin");if(blocked)return blocked;return json(await database.select("SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 500"));}
+  if(route==="/api/system/integrity"&&method==="GET"){const result=await database.select<Array<{integrity_check:string}>>("PRAGMA integrity_check");return json({ok:result.every((row)=>row.integrity_check==="ok"),details:result});}  if (route === "/api/settings" && method === "GET") return json(await allSettings());
   if (route === "/api/settings" && method === "POST") {
     const blocked = authorized("admin"); if (blocked) return blocked;
     return json(await setSettings(payload));
@@ -394,7 +480,7 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
     await database.execute("PRAGMA foreign_keys = OFF");
     try {
       await database.execute("BEGIN");
-      for (const table of ["order_items","package_items","orders","packages","items","settings","users"]) {
+      for (const table of ["order_items","package_items","attachments","reminders","drafts","saved_views","recent_items","audit_log","undo_log","contacts","orders","packages","items","role_permissions","settings","users"]) {
         await database.execute("DELETE FROM " + table);
       }
       await database.execute("COMMIT");
@@ -422,6 +508,7 @@ export async function installDesktopApi() {
   await database.execute("PRAGMA foreign_keys = ON");
   await database.execute("PRAGMA journal_mode = WAL");
   for (const statement of schema) await database.execute(statement);
+  await runMigrations(database);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     if (!path.startsWith("/api/")) return nativeFetch(input, init);
@@ -429,7 +516,7 @@ export async function installDesktopApi() {
       const method = (init?.method || "GET").toUpperCase();
       const response = await handleApi(path, method, init);
       const pathname = new URL(path, "http://folio.local").pathname;
-      const syncable = method !== "GET" && response.ok && /^\/api\/(settings|items|packages|orders|users)(\/|$)/.test(pathname);
+      const syncable = method !== "GET" && response.ok && /^\/api\/(settings|items|packages|orders|users|contacts|drafts|reminders)(\/|$)/.test(pathname);
       if (syncable) window.dispatchEvent(new CustomEvent("folio-data-changed"));
       return response;
     }

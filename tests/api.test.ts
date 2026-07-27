@@ -428,9 +428,11 @@ test("API: Multi-Format Exporters", async () => {
   assert.ok(arrayBuffer.byteLength > 0);
   const backup = JSON.parse(new TextDecoder().decode(arrayBuffer));
   assert.strictEqual(backup.format, "folio.backup");
-  assert.strictEqual(backup.version, 2);
+  assert.strictEqual(backup.version, 3);
   assert.ok(Array.isArray(backup.tables.users));
   assert.ok(Array.isArray(backup.tables.settings));
+  assert.ok(Array.isArray(backup.tables.contacts));
+  assert.ok(Array.isArray(backup.tables.audit_log));
 
 });
 

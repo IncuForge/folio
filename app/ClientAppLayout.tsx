@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import ModalOverlays from "@/components/ModalOverlays";
+import CommandPalette from "@/components/CommandPalette";
 import { useAppContext } from "@/lib/AppContext";
 
 export default function ClientAppLayout({ children }: { children: React.ReactNode }) {
@@ -421,6 +422,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         onLogout={handleLogout}
       />
 
+      <CommandPalette navigate={setActiveTab} />
       <main className="main-content">
         {children}
         <footer className="app-footer">

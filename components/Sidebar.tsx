@@ -14,7 +14,8 @@ import {
   ChevronRight,
   LogOut,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 
 const LogoIcon = ({ size = 18 }: { size?: number }) => (
@@ -61,6 +62,7 @@ export default function Sidebar({
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "orders", label: "Orders Book", icon: ClipboardList },
+    { id: "contacts", label: "Customers", icon: Users },
     { id: "calendar", label: "Calendar", icon: CalendarRange },
     { id: "library", label: "Food Library", icon: Utensils },
     { id: "reports", label: "Reports", icon: TrendingUp },

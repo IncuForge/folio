@@ -8,6 +8,7 @@ import FoodLibraryView from "@/components/FoodLibraryView";
 import OrderFormView from "@/components/OrderFormView";
 import ReportsView from "@/components/ReportsView";
 import SettingsView from "@/components/SettingsView";
+import ContactsView from "@/components/ContactsView";
 import { usePathname } from "next/navigation";
 import DesktopTitleBar from "./DesktopTitleBar";
 
@@ -16,7 +17,7 @@ function CurrentView() {
   const views: Record<string, ReactNode> = {
     "/": <DashboardView />, "/calendar": <CalendarView />, "/orders": <OrdersBookView />,
     "/library": <FoodLibraryView />, "/order-form": <OrderFormView />,
-    "/reports": <ReportsView />, "/settings": <SettingsView />,
+    "/reports": <ReportsView />, "/contacts": <ContactsView />, "/settings": <SettingsView />,
   };
   return <div className="tab-content-animate">{views[pathname] || <DashboardView />}</div>;
 }

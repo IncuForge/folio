@@ -160,3 +160,14 @@ INSERT INTO settings (key, value) VALUES
 ('autoBackupFrequency', 'daily'),
 ('autoBackupRetention', '14')
 ON CONFLICT (key) DO NOTHING;
+
+-- Folio productivity foundation (backup format v3)
+CREATE TABLE IF NOT EXISTS contacts (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),name TEXT NOT NULL,phone TEXT DEFAULT '',email TEXT DEFAULT '',address TEXT DEFAULT '',preferences TEXT DEFAULT '',allergens JSONB DEFAULT '[]',notes TEXT DEFAULT '',is_deleted BOOLEAN DEFAULT FALSE,created_at TIMESTAMPTZ DEFAULT NOW(),updated_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS drafts (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),user_id UUID,draft_type TEXT NOT NULL,payload JSONB NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW(),updated_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS attachments (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),entity_type TEXT NOT NULL,entity_id TEXT NOT NULL,name TEXT NOT NULL,mime_type TEXT DEFAULT '',size BIGINT DEFAULT 0,storage_path TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS reminders (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),entity_type TEXT NOT NULL,entity_id TEXT,title TEXT NOT NULL,due_at TIMESTAMPTZ NOT NULL,status TEXT DEFAULT 'pending',recurrence TEXT,created_at TIMESTAMPTZ DEFAULT NOW(),completed_at TIMESTAMPTZ);
+CREATE TABLE IF NOT EXISTS saved_views (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),user_id UUID NOT NULL,view_type TEXT NOT NULL,name TEXT NOT NULL,config JSONB NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW(),updated_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS recent_items (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),user_id UUID NOT NULL,entity_type TEXT NOT NULL,entity_id TEXT NOT NULL,accessed_at TIMESTAMPTZ DEFAULT NOW(),UNIQUE(user_id,entity_type,entity_id));
+CREATE TABLE IF NOT EXISTS audit_log (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),user_id UUID,action TEXT NOT NULL,entity_type TEXT NOT NULL,entity_id TEXT,before_json JSONB,after_json JSONB,created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS undo_log (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),user_id UUID,action TEXT NOT NULL,inverse_json JSONB NOT NULL,expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS role_permissions (role TEXT NOT NULL,capability TEXT NOT NULL,allowed BOOLEAN DEFAULT TRUE,PRIMARY KEY(role,capability));

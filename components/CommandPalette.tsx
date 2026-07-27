@@ -1,0 +1,55 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { Search, Plus, Settings, ClipboardList, Utensils, Users, X } from "lucide-react";
+
+type SearchResult = { type: "contact" | "item" | "order"; id: string; title: string; subtitle?: string };
+
+export default function CommandPalette({ navigate }: { navigate: (tab: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setOpen((value) => !value); }
+      if (event.key === "Escape") setOpen(false);
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") { event.preventDefault(); navigate("order-form"); }
+    };
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  }, [navigate]);
+
+  useEffect(() => { if (open) window.setTimeout(() => input.current?.focus(), 0); }, [open]);
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      if (query.trim().length < 2) { setResults([]); return; }
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+      setResults(response.ok ? await response.json() : []);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const go = (tab: string) => { navigate(tab); setOpen(false); setQuery(""); };
+  if (!open) return <button className="command-palette-trigger" onClick={() => setOpen(true)} aria-label="Open global search"><Search size={15}/><span>Search</span><kbd>Ctrl K</kbd></button>;
+
+  return (
+    <div className="command-palette-backdrop" role="dialog" aria-modal="true" aria-label="Search Folio" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
+      <div className="command-palette">
+        <div className="command-palette-input"><Search size={18}/><input ref={input} value={query} onChange={(event)=>setQuery(event.target.value)} placeholder="Search clients, events, dishes, venues or phone numbers…" aria-label="Search Folio"/><button onClick={()=>setOpen(false)} aria-label="Close search"><X size={17}/></button></div>
+        {query.length < 2 ? <div className="command-list">
+          <button onClick={()=>go("order-form")}><Plus size={17}/><span><strong>Create order</strong><small>Ctrl N</small></span></button>
+          <button onClick={()=>go("orders")}><ClipboardList size={17}/><span><strong>Open Orders Book</strong></span></button>
+          <button onClick={()=>go("library")}><Utensils size={17}/><span><strong>Open Food Library</strong></span></button>
+          <button onClick={()=>go("settings")}><Settings size={17}/><span><strong>Open Settings</strong></span></button>
+        </div> : <div className="command-list" aria-live="polite">
+          {results.map((result)=><button key={`${result.type}:${result.id}`} onClick={()=>go(result.type==="item"?"library":result.type==="order"?"orders":"contacts")}>
+            {result.type==="contact"?<Users size={17}/>:result.type==="item"?<Utensils size={17}/>:<ClipboardList size={17}/>}<span><strong>{result.title}</strong><small>{result.subtitle}</small></span><em>{result.type}</em>
+          </button>)}
+          {!results.length && <p className="command-empty">No matching Folio records.</p>}
+        </div>}
+      </div>
+    </div>
+  );
+}

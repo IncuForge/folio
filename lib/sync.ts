@@ -23,6 +23,15 @@ const keys: Record<BackupTable, readonly string[]> = {
   order_items: ["order_id", "item_id"],
   users: ["id"],
   settings: ["key"],
+  contacts: ["id"],
+  drafts: ["id"],
+  attachments: ["id"],
+  reminders: ["id"],
+  saved_views: ["id"],
+  recent_items: ["id"],
+  audit_log: ["id"],
+  undo_log: ["id"],
+  role_permissions: ["role", "capability"],
 };
 
 function canonical(value: unknown): string {

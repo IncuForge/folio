@@ -115,7 +115,7 @@ fn json_response(value: Value, status: u16) -> Response<std::io::Cursor<Vec<u8>>
 
 fn valid_snapshot(value: &Value) -> bool {
   value.get("format").and_then(Value::as_str) == Some("folio.backup")
-    && value.get("version").and_then(Value::as_u64) == Some(2)
+    && matches!(value.get("version").and_then(Value::as_u64), Some(2 | 3))
     && value.get("tables").and_then(Value::as_object).is_some()
 }
 
