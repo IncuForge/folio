@@ -22,7 +22,33 @@ export default function OrderFormView() {
   const [dishSearch, setDishSearch] = useState<Record<string, string>>({});
 
   const [isSaving, setIsSaving] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<string>("");
+  const [recoverableDraft, setRecoverableDraft] = useState<any | null>(null);
 
+  const draftId = `order-${orderForm.id || "new"}`;
+
+  useEffect(() => {
+    fetch("/api/drafts").then((response) => response.ok ? response.json() : []).then((drafts) => {
+      const saved = drafts.find((entry: any) => entry.id === draftId);
+      if (saved) {
+        try { setRecoverableDraft(JSON.parse(saved.payload)); setDraftSavedAt(saved.updated_at || ""); } catch { /* Ignore invalid legacy draft. */ }
+      }
+    }).catch(() => undefined);
+  }, [draftId]);
+
+  useEffect(() => {
+    if (!orderForm.client_name && !orderForm.event_name && !orderForm.notes) return;
+    const timer = window.setTimeout(async () => {
+      const response = await fetch("/api/drafts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: draftId, draftType: "order", payload: orderForm }) });
+      if (response.ok) setDraftSavedAt(new Date().toISOString());
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [draftId, orderForm]);
+
+  const discardDraft = async () => {
+    await fetch(`/api/drafts/${draftId}`, { method: "DELETE" });
+    setRecoverableDraft(null); setDraftSavedAt("");
+  };
   // Prevent any key entry that is not a digit (for integer inputs like guest count, qty)
   const restrictToDigitsOnly = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const allowed = [
@@ -61,6 +87,7 @@ export default function OrderFormView() {
     setIsSaving(true);
     try {
       await handleSaveOrder(e);
+      await fetch(`/api/drafts/${draftId}`, { method: "DELETE" });
     } catch (err) {
       console.error("Failed to save order", err);
     } finally {
@@ -354,6 +381,10 @@ export default function OrderFormView() {
         </p>
       </header>
 
+      <div className="draft-status" role="status">
+        <span>{draftSavedAt ? `Draft saved ${new Date(draftSavedAt).toLocaleTimeString()}` : "Draft autosave activates after you begin typing."}</span>
+        {recoverableDraft && <div><button type="button" className="btn btn-secondary" onClick={() => { setOrderForm(recoverableDraft); setRecoverableDraft(null); }}>Restore Draft</button><button type="button" className="btn btn-secondary" onClick={discardDraft}>Discard</button></div>}
+      </div>
       <form onSubmit={handleSubmit} className="order-form order-form-two-cols">
         {/* Left Column: General info, Financials, and Payments */}
         <div className="order-form-sidebar">

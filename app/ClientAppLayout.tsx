@@ -393,6 +393,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         </div>
 
         <aside className="login-attribution-panel">
+          <div className="login-brand-watermark" aria-hidden="true" />
           <span className="login-attribution-kicker">LOCAL-FIRST CATERING OPERATIONS</span>
           <div>
             <h2 className="login-attribution-title">Built thoughtfully for teams that run real events.</h2>
@@ -411,6 +412,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={`app-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <div className="incuforge-watermark" aria-hidden="true" />
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 

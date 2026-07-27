@@ -4763,3 +4763,24 @@ html {
 
 .contacts-toolbar{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7rem;padding:.75rem;margin-bottom:1rem}.contacts-toolbar .form-input{margin:0}.contacts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:1rem}.contact-card{padding:1.15rem;display:grid;gap:1rem}.contact-card h3{margin:0}.contact-card p{margin:.25rem 0 0;color:var(--text-muted)}.contact-card dl{display:grid;grid-template-columns:6rem 1fr;gap:.4rem .75rem;margin:0;font-size:.82rem}.contact-card dt{font-weight:700;color:var(--text-muted)}.contact-card dd{margin:0}.contact-actions{display:flex;justify-content:flex-end;gap:.5rem}.contact-editor{width:min(46rem,calc(100vw - 2rem));padding:1.4rem;max-height:calc(100vh - 2rem);overflow:auto}.contact-editor h2{margin:0 0 1rem}.contact-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}.contact-form-grid label{display:grid;gap:.35rem}.contact-form-grid .wide{grid-column:1/-1}.contact-form-grid textarea{min-height:6rem;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.2rem}.empty-state-box{min-height:18rem;border:1px dashed var(--glass-border);display:grid;place-content:center;justify-items:center;text-align:center;gap:.6rem;padding:2rem}.empty-state-box h3,.empty-state-box p{margin:0}.empty-state-box p{color:var(--text-muted)}
 @media(max-width:680px){.contact-form-grid{grid-template-columns:1fr}.contact-form-grid .wide{grid-column:auto}.contacts-grid{grid-template-columns:1fr}}
+
+.incuforge-watermark {
+  position: fixed;
+  z-index: 0;
+  right: clamp(1rem, 4vw, 4rem);
+  bottom: clamp(4rem, 8vh, 7rem);
+  width: clamp(8rem, 16vw, 15rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: url("/brand/incuforge-if-black-solid.svg") center / contain no-repeat;
+  opacity: 0.022;
+}
+.dark .incuforge-watermark { background-image: url("/brand/incuforge-if-white-solid.svg"); opacity: 0.03; }
+.main-content,.sidebar,.mobile-header,.mobile-bottom-nav { position: relative; z-index: 1; }
+.login-attribution-panel { position: relative; isolation: isolate; overflow: hidden; }
+.login-attribution-panel > *:not(.login-brand-watermark) { position: relative; z-index: 1; }
+.login-brand-watermark { position:absolute;z-index:0;width:24rem;aspect-ratio:1;right:-7rem;bottom:-7rem;background:url("/brand/incuforge-if-white-solid.svg") center/contain no-repeat;opacity:.045;pointer-events:none;transform:rotate(-3deg); }
+@media(max-width:1023px){.incuforge-watermark{width:9rem;right:-1.5rem;bottom:5rem;opacity:.018}}
+@media(prefers-reduced-transparency:reduce){.incuforge-watermark,.login-brand-watermark{display:none}}
+
+.draft-status{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.75rem 0 1rem;padding:.65rem .8rem;border:1px solid var(--glass-border);background:var(--card-bg);color:var(--text-muted);font-size:.76rem}.draft-status>div{display:flex;gap:.45rem}.draft-status .btn{min-height:2rem;padding:.3rem .6rem;font-size:.72rem}@media(max-width:680px){.draft-status{align-items:stretch;flex-direction:column}.draft-status>div{display:grid;grid-template-columns:1fr 1fr}}
