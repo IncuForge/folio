@@ -4460,3 +4460,50 @@ body {
 .login-card:hover { transform: none !important; }
 .login-logo,
 .login-title { font-style: normal !important; }
+/* Android first-run and authentication sizing */
+.native-mobile-shell {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.native-mobile-shell .login-page-container {
+  min-height: 100dvh;
+  align-items: flex-start;
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+  overflow-y: auto;
+}
+
+.native-mobile-shell .login-card {
+  max-width: 30rem !important;
+  margin: 0 auto;
+  padding: clamp(1.15rem, 5vw, 1.6rem) !important;
+}
+
+.native-mobile-shell .login-header { margin-bottom: 1.25rem; }
+.native-mobile-shell .login-logo {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0.9rem;
+  font-size: 1.5rem;
+}
+.native-mobile-shell .login-title {
+  max-width: 100%;
+  font-size: clamp(1.8rem, 9vw, 2.35rem) !important;
+  line-height: 1.08;
+}
+.native-mobile-shell .login-subtitle {
+  max-width: 28rem;
+  font-size: 0.88rem;
+  line-height: 1.55 !important;
+}
+.native-mobile-shell .login-form { gap: 0.9rem; }
+.native-mobile-shell .form-group { gap: 0.35rem; }
+.native-mobile-shell .form-input { min-height: 46px; padding: 0.7rem 0.8rem; }
+.native-mobile-shell .login-card .btn { min-height: 46px; }
+
+@media (max-width: 380px) {
+  .native-mobile-shell .login-page-container { padding-inline: 0.5rem; }
+  .native-mobile-shell .login-card { padding: 1rem !important; }
+  .native-mobile-shell .login-title { font-size: 1.7rem !important; }
+  .native-mobile-shell .login-subtitle { font-size: 0.82rem; }
+}
