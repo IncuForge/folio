@@ -4445,3 +4445,18 @@ body {
   .backup-file-picker-button { min-height: 42px; justify-content: center; border-right: 0; border-bottom: 1px solid var(--border-ink); }
   .backup-file-picker-name { padding: 0.7rem 0.8rem; }
 }
+
+/* Compact desktop rail and login motion refinements */
+@media (min-width: 1024px) {
+  .sidebar-collapsed .sidebar { width: 64px; }
+  .sidebar-collapsed .main-content { margin-left: 64px; max-width: calc(100% - 64px); }
+  .sidebar-collapsed .sidebar-header { justify-content: center; padding-inline: 0; }
+  .sidebar-collapsed .sidebar-brand { gap: 0; }
+  .sidebar-collapsed .sidebar-nav,
+  .sidebar-collapsed .sidebar-bottom-container { padding-inline: 7px; }
+  .sidebar-collapsed .sidebar-item-btn { justify-content: center; gap: 0; padding-inline: 0; }
+}
+
+.login-card:hover { transform: none !important; }
+.login-logo,
+.login-title { font-style: normal !important; }

@@ -356,6 +356,30 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
   if(route==="/api/export/csv") return new Response(await ordersCsv(),{status:200,headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=folio-orders.csv"}});
   if(route==="/api/backup/restore"&&method==="POST") { const blocked=authorized("admin");if(blocked)return blocked;const backup=validateBackup(payload.backup);const summary=Object.fromEntries(Object.entries(backup.tables).map(([table,rows])=>[table,rows.length]));if(payload.confirm!==true)return json({valid:true,requiresConfirmation:true,createdAt:backup.createdAt,appVersion:backup.appVersion,summary});await restoreDocument(backup);return json({ok:true,summary}); }
   if(route==="/api/backup/automatic"&&method==="POST") return json(await automaticBackup());
+  if(route==="/api/system/erase"&&method==="POST") {
+    const blocked=authorized("admin"); if(blocked)return blocked;
+    await database.execute("PRAGMA foreign_keys = OFF");
+    try {
+      await database.execute("BEGIN");
+      for (const table of ["order_items","package_items","orders","packages","items","settings","users"]) {
+        await database.execute("DELETE FROM " + table);
+      }
+      await database.execute("COMMIT");
+    } catch (error) {
+      await database.execute("ROLLBACK");
+      throw error;
+    } finally {
+      await database.execute("PRAGMA foreign_keys = ON");
+    }
+    await database.execute("VACUUM");
+    try {
+      for (const entry of await readDir("backups", { baseDir: BaseDirectory.AppData })) {
+        if (entry.isFile) await remove("backups/" + entry.name, { baseDir: BaseDirectory.AppData });
+      }
+    } catch { /* No backup directory exists yet. */ }
+    sessionUser = null;
+    return json({ok:true});
+  }
   if(route==="/api/log") return json({ok:true});
   return json({error:"Desktop endpoint not implemented: "+method+" "+route},404);
 }

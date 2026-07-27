@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Android debug APK
+    name: Android ARM64 debug APK
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 
@@ -41,7 +41,7 @@ jobs:
       - name: Install Rust with Android targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+          targets: aarch64-linux-android
 
       - name: Install locked frontend dependencies
         run: npm ci
@@ -50,7 +50,7 @@ jobs:
         run: npm run android:init -- --ci
 
       - name: Build Android debug APK
-        run: npm run android:build -- --debug
+        run: npm run android:build -- --debug --target aarch64 --split-per-abi
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v6

@@ -342,6 +342,19 @@ export default function SettingsView() {
     }
   };
 
+  const eraseLocalData = async () => {
+    const confirmation = window.prompt(
+      "This permanently removes all Folio orders, library items, packages, users, settings, and automatic backups from this computer. Type DELETE to continue."
+    );
+    if (confirmation !== "DELETE") return;
+    const response = await fetch("/api/system/erase", { method: "POST" });
+    if (!response.ok) {
+      setErrorMsg("Folio could not erase the local data.");
+      return;
+    }
+    localStorage.clear();
+    window.location.reload();
+  };
   return (
     <div className="settings-container">
       <header>
@@ -626,6 +639,18 @@ export default function SettingsView() {
         </div>
       )}
 
+      {isDesktopRuntime && isAdmin && (
+        <div className="glass-card settings-update-panel settings-danger-panel">
+          <div className="settings-update-copy">
+            <span className="settings-update-icon"><Trash2 size={18} /></span>
+            <div>
+              <h3>Local Data &amp; Uninstall</h3>
+              <p>Erase the database, accounts, settings, and automatic backups stored by Folio on this computer.</p>
+            </div>
+          </div>
+          <button type="button" className="btn btn-danger" onClick={eraseLocalData}>Erase All Local Data</button>
+        </div>
+      )}
       {/* User Management Section - Visible to Admins Only */}
       {isAdmin && (
         <div className="glass-card users-panel">
