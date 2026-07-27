@@ -4839,7 +4839,7 @@ html {
   opacity: 0.022;
 }
 .dark .incuforge-watermark { background-image: url("../public/brand/incuforge-if-white-solid.svg"); opacity: 0.03; }
-.main-content,.sidebar,.mobile-header,.mobile-bottom-nav { position: relative; z-index: 1; }
+.main-content { position: relative; z-index: 1; }
 .login-attribution-panel { position: relative; isolation: isolate; overflow: hidden; }
 .login-attribution-panel > *:not(.login-brand-watermark) { position: relative; z-index: 1; }
 .login-brand-watermark { position:absolute;z-index:0;width:24rem;aspect-ratio:1;right:-7rem;bottom:-7rem;background:url("../public/brand/incuforge-if-white-solid.svg") center/contain no-repeat;opacity:.045;pointer-events:none;transform:rotate(-3deg); }
