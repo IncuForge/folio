@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {deleteRow} from "@/lib/productivity-db";import {webSession} from "@/lib/web-session";export async function DELETE(_:Request,{params}:{params:Promise<{id:string}>}){if(!await webSession())return NextResponse.json({error:"Unauthorized"},{status:401});await deleteRow("drafts",(await params).id);return NextResponse.json({ok:true})}
