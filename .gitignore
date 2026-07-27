@@ -42,6 +42,7 @@ client_errors.log
 .env*
 !.env.example
 !.env.docker
+/.secrets/
 
 # vercel
 .vercel

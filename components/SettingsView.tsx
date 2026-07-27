@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/lib/AppContext";
-import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen } from "lucide-react";
+import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen, RefreshCw, Download } from "lucide-react";
 import { saveResponseToFile } from "@/lib/save-file";
 
 export default function SettingsView() {
@@ -41,6 +41,13 @@ export default function SettingsView() {
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
   const [autoBackupFrequency, setAutoBackupFrequency] = useState("daily");
   const [autoBackupRetention, setAutoBackupRetention] = useState(14);
+  const [isDesktopRuntime, setIsDesktopRuntime] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState("0.1.0");
+  const [updateState, setUpdateState] = useState<"idle" | "checking" | "current" | "available" | "installing" | "error">("idle");
+  const [availableVersion, setAvailableVersion] = useState("");
+  const [updateNotes, setUpdateNotes] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("Check GitHub Releases for a newer signed build.");
+  const pendingUpdateRef = React.useRef<any>(null);
 
   useEffect(() => {
     setLocalBrandName(pdfBrandName || "");
@@ -56,6 +63,14 @@ export default function SettingsView() {
         setAutoBackupRetention(Number(data.autoBackupRetention || 14));
       })
       .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    const desktop = "__TAURI_INTERNALS__" in window;
+    setIsDesktopRuntime(desktop);
+    if (desktop) {
+      import("@tauri-apps/api/app").then(({ getVersion }) => getVersion()).then(setCurrentVersion).catch(() => undefined);
+    }
   }, []);
 
   const isAdmin = currentUser?.role === "admin";
@@ -283,6 +298,48 @@ export default function SettingsView() {
     });
     if (response.ok) setSuccessMsg("Automatic backup policy saved.");
     else setErrorMsg("Could not save the automatic backup policy.");
+  };
+
+  const checkForUpdates = async () => {
+    setUpdateState("checking");
+    setUpdateMessage("Checking the signed Folio release channel…");
+    pendingUpdateRef.current = null;
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const update = await check({ timeout: 30000 });
+      if (!update) {
+        setUpdateState("current");
+        setUpdateMessage(`Folio ${currentVersion} is up to date.`);
+        return;
+      }
+      pendingUpdateRef.current = update;
+      setAvailableVersion(update.version);
+      setUpdateNotes(update.body || "This release contains Folio improvements and fixes.");
+      setUpdateState("available");
+      setUpdateMessage(`Folio ${update.version} is ready to install.`);
+    } catch (error) {
+      console.error("Update check failed", error);
+      setUpdateState("error");
+      setUpdateMessage("Could not reach the signed update channel. It may not have a published release yet.");
+    }
+  };
+
+  const installUpdate = async () => {
+    const update = pendingUpdateRef.current;
+    if (!update) return;
+    setUpdateState("installing");
+    setUpdateMessage(`Downloading Folio ${availableVersion}…`);
+    try {
+      await update.downloadAndInstall((event: { event: string }) => {
+        if (event.event === "Finished") setUpdateMessage("Update installed. Restarting Folio…");
+      });
+      const { relaunch } = await import("@tauri-apps/plugin-process");
+      await relaunch();
+    } catch (error) {
+      console.error("Update installation failed", error);
+      setUpdateState("error");
+      setUpdateMessage("The update could not be installed. Your current Folio installation was not changed.");
+    }
   };
 
   return (
@@ -545,6 +602,29 @@ export default function SettingsView() {
           </div>
         </div>
       </div>
+
+      {isDesktopRuntime && (
+        <div className="glass-card settings-update-panel">
+          <div className="settings-update-copy">
+            <span className="settings-update-icon"><RefreshCw size={18} /></span>
+            <div>
+              <h3>Software Updates</h3>
+              <p>{updateMessage}</p>
+              {updateState === "available" && updateNotes && <p className="settings-update-notes">{updateNotes}</p>}
+            </div>
+          </div>
+          <div className="settings-update-actions">
+            <span className="settings-version-badge">Installed: v{currentVersion}</span>
+            {updateState === "available" ? (
+              <button type="button" className="btn btn-primary" onClick={installUpdate}><Download size={15} /> Download &amp; Install</button>
+            ) : (
+              <button type="button" className="btn btn-secondary" disabled={updateState === "checking" || updateState === "installing"} onClick={checkForUpdates}>
+                <RefreshCw size={15} className={updateState === "checking" ? "spin" : ""} /> {updateState === "checking" ? "Checking…" : "Check for Updates"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* User Management Section - Visible to Admins Only */}
       {isAdmin && (

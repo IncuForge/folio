@@ -1574,6 +1574,44 @@ body {
   align-items: stretch;
 }
 
+.settings-update-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.settings-update-copy,
+.settings-update-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.settings-update-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-ink);
+  background: var(--bg-app);
+}
+
+.settings-update-copy h3 { font-size: 1rem; }
+.settings-update-copy p { margin-top: 0.2rem; color: var(--ink-muted); font-size: 0.78rem; }
+.settings-update-copy .settings-update-notes { max-width: 46rem; margin-top: 0.5rem; color: var(--ink); }
+.settings-version-badge { white-space: nowrap; color: var(--ink-muted); font-size: 0.72rem; font-weight: 700; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+@media (max-width: 760px) {
+  .settings-update-panel,
+  .settings-update-actions { align-items: stretch; flex-direction: column; }
+  .settings-update-actions .btn { width: 100%; }
+}
+
 .settings-support-card {
   display: flex;
   flex-direction: column;
