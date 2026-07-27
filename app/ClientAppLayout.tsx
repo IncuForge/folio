@@ -186,7 +186,8 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
       const address = pairingAddress.trim().replace(/\/$/, "");
       if (!address || !pairingCode.trim()) throw new Error("Enter the desktop address and pairing code.");
       const { fetch: mobileFetch } = await import("@tauri-apps/plugin-http");
-      const pairResponse = await mobileFetch(`${address}/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: pairingCode.trim(), deviceName: "Folio Android" }) });
+      const deviceId = crypto.randomUUID();
+      const pairResponse = await mobileFetch(`${address}/pair`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: pairingCode.trim(), deviceName: "Folio Android", deviceId }) });
       const pairData = await pairResponse.json();
       if (!pairResponse.ok) throw new Error(pairData.error || "The desktop rejected this pairing request.");
       const snapshotResponse = await mobileFetch(`${address}${pairData.snapshotUrl}`, { headers: { Authorization: `Bearer ${pairData.deviceToken}` } });
@@ -195,7 +196,15 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
       const restoreResponse = await fetch("/api/setup/restore", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ backup: snapshotData.snapshot }) });
       const restoreData = await restoreResponse.json();
       if (!restoreResponse.ok) throw new Error(restoreData.error || "The desktop snapshot could not be restored.");
-      localStorage.setItem("folio-sync-address", address); localStorage.setItem("folio-sync-device-token", pairData.deviceToken); window.location.reload();
+      const bootstrapResponse = await fetch("/api/sync/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, deviceToken: pairData.deviceToken, deviceId, revision: snapshotData.revision, snapshot: snapshotData.snapshot }),
+      });
+      if (!bootstrapResponse.ok) throw new Error("Could not save the paired-device identity.");
+      localStorage.removeItem("folio-sync-address");
+      localStorage.removeItem("folio-sync-device-token");
+      window.location.reload();
     } catch (error) { setPairingError(error instanceof Error ? error.message : "Could not connect to Folio Desktop."); }
     finally { setPairingLoading(false); }
   };

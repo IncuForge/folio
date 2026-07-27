@@ -4680,3 +4680,53 @@ html {
   .sync-pairing-actions { align-items: stretch; }
   .sync-qr-block img { align-self: center; width: 180px; height: 180px; }
 }
+.sync-runtime-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.sync-phase {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.sync-phase-idle { color: #238636; }
+.sync-phase-syncing { color: #1f6feb; }
+.sync-phase-offline, .sync-phase-error, .sync-phase-conflict { color: #c2410c; }
+
+.sync-device-list {
+  width: min(34rem, 100%);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.sync-device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--glass-border);
+}
+
+.sync-device-row > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.sync-device-row span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 680px) {
+  .sync-device-row { align-items: stretch; flex-direction: column; }
+  .sync-device-row .btn { width: 100%; }
+}

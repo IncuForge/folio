@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test tests/db.test.ts tests/api.test.ts",
+    "test": "node --import tsx --test tests/db.test.ts tests/api.test.ts tests/sync.test.ts",
     "android:init": "tauri android init",
     "android:dev": "tauri android dev",
     "android:build": "tauri android build --apk",

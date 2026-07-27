@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import "@/app/globals.css";
 import App from "./App";
 import { installDesktopApi } from "./desktop-api";
+import { startSyncCoordinator } from "./sync-coordinator";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 const externalProtocols = new Set(["http:", "https:", "mailto:", "tel:"]);
@@ -24,6 +25,7 @@ document.addEventListener("click", (event) => {
 });
 
 await installDesktopApi();
+void startSyncCoordinator();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode><App /></React.StrictMode>

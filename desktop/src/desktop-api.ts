@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { BaseDirectory, mkdir, readDir, remove, writeTextFile } from "@tauri-apps/plugin-fs";
-import { BACKUP_TABLES, FOLIO_BACKUP_FORMAT, FOLIO_BACKUP_VERSION, validateBackup } from "@/lib/backup";
+import { BACKUP_TABLES, FOLIO_BACKUP_FORMAT, FOLIO_BACKUP_VERSION, validateBackup, type FolioBackup } from "@/lib/backup";
 
 type Row = Record<string, any>;
 type SessionUser = { id: string; email: string; role: string };
@@ -45,6 +45,7 @@ const schema = [
     role TEXT DEFAULT 'manager', created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS idx_orders_event_date ON orders(event_date)`,
   `CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`,
 ];
@@ -188,12 +189,12 @@ async function setSettings(values: Row) {
   return allSettings();
 }
 
-async function backupDocument() {
-  const tables: Row = {};
-  for (const table of BACKUP_TABLES) tables[table] = await database.select("SELECT * FROM " + table);
+export async function readSyncSnapshot(): Promise<FolioBackup> {
+  const tables = {} as FolioBackup["tables"];
+  for (const table of BACKUP_TABLES) tables[table] = await database.select<Row[]>("SELECT * FROM " + table);
   return {
     format: FOLIO_BACKUP_FORMAT, version: FOLIO_BACKUP_VERSION, createdAt: new Date().toISOString(),
-    appVersion: "0.1.0", source: "desktop", tables,
+    appVersion: "0.1.0", source: "desktop" as const, tables,
   };
 }
 
@@ -208,7 +209,7 @@ async function automaticBackup() {
   const now = new Date();
   const filename = "folio-backup-" + now.toISOString().replace(/[:.]/g, "-") + ".folio-backup.json";
   await mkdir("backups", { baseDir: BaseDirectory.AppData, recursive: true });
-  await writeTextFile("backups/" + filename, JSON.stringify(await backupDocument(), null, 2), { baseDir: BaseDirectory.AppData });
+  await writeTextFile("backups/" + filename, JSON.stringify(await readSyncSnapshot(), null, 2), { baseDir: BaseDirectory.AppData });
   await setSettings({ lastAutoBackupAt: now.toISOString() });
   const retention = Math.max(3, Math.min(90, Number(configured.autoBackupRetention || 14)));
   const files = (await readDir("backups", { baseDir: BaseDirectory.AppData }))
@@ -220,6 +221,18 @@ async function automaticBackup() {
   return { created: true, supported: true, filename, createdAt: now.toISOString() };
 }
 
+export async function createSyncRecoveryBackup(reason: string) {
+  const now = new Date();
+  const safeReason = reason.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  const filename = `sync-recovery-${now.toISOString().replace(/[:.]/g, "-")}-${safeReason}.folio-backup.json`;
+  await mkdir("backups/recovery", { baseDir: BaseDirectory.AppData, recursive: true });
+  await writeTextFile("backups/recovery/" + filename, JSON.stringify(await readSyncSnapshot(), null, 2), { baseDir: BaseDirectory.AppData });
+  const files = (await readDir("backups/recovery", { baseDir: BaseDirectory.AppData }))
+    .filter((entry) => entry.isFile && entry.name.endsWith(".folio-backup.json"))
+    .sort((left, right) => right.name.localeCompare(left.name));
+  for (const entry of files.slice(10)) await remove("backups/recovery/" + entry.name, { baseDir: BaseDirectory.AppData });
+  return filename;
+}
 function csvCell(value: unknown) {
   const text = String(value ?? "");
   return "\"" + text.replace(/"/g, "\"\"") + "\"";
@@ -243,7 +256,7 @@ const restoreColumns: Record<string, string[]> = {
   users: ["id","email","password","role","created_at"], settings: ["key","value"],
 };
 
-async function restoreDocument(document: unknown) {
+export async function applySyncSnapshot(document: unknown) {
   const backup = validateBackup(document);
   const deleteOrder = ["order_items","package_items","orders","packages","items","settings","users"];
   const insertOrder = ["items","packages","users","settings","orders","package_items","order_items"];
@@ -279,11 +292,24 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
     const [{ count }] = await database.select<Array<{ count: number }>>("SELECT COUNT(*) AS count FROM users");
     return json({ setupRequired: Number(count) === 0 });
   }
+  if (route === "/api/sync/bootstrap" && method === "POST") {
+    const snapshot = validateBackup(payload.snapshot);
+    await Promise.all([
+      writeSyncMeta("address", String(payload.address || "")),
+      writeSyncMeta("deviceToken", String(payload.deviceToken || "")),
+      writeSyncMeta("deviceId", String(payload.deviceId || "")),
+      writeSyncMeta("revision", String(Number(payload.revision || 0))),
+      writeSyncMeta("baseSnapshot", JSON.stringify(snapshot)),
+      writeSyncMeta("dirty", "false"),
+      writeSyncMeta("conflicts", "[]"),
+    ]);
+    return json({ ok: true });
+  }
   if (route === "/api/setup/restore" && method === "POST") {
     const [{ count }] = await database.select<Array<{ count: number }>>("SELECT COUNT(*) AS count FROM users");
     if (Number(count) !== 0) return json({ error: "This Folio installation is already configured." }, 409);
     const backup = validateBackup(payload.backup);
-    await restoreDocument(backup);
+    await applySyncSnapshot(backup);
     return json({ ok: true });
   }
   if (route === "/api/setup" && method === "POST") {
@@ -358,10 +384,10 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
   if(userMatch&&method==="PATCH") { if(sessionUser!.role!=="admin"&&sessionUser!.id!==userMatch[1])return json({error:"Forbidden"},403);await database.execute("UPDATE users SET password=$1 WHERE id=$2",[await sha256(payload.newPassword),userMatch[1]]);return json({ok:true}); }
   if(userMatch&&method==="DELETE") { const blocked=authorized("admin");if(blocked)return blocked;if(userMatch[1]===sessionUser!.id)return json({error:"You cannot delete your own account."},400);await database.execute("DELETE FROM users WHERE id=$1",[userMatch[1]]);return json({ok:true}); }
 
-  if(route==="/api/export/backup") return json(await backupDocument(),200,{"Content-Disposition":"attachment; filename=folio-backup.folio-backup.json"});
-  if(route==="/api/export/json") return json(await backupDocument(),200,{"Content-Disposition":"attachment; filename=folio-export.json"});
+  if(route==="/api/export/backup") return json(await readSyncSnapshot(),200,{"Content-Disposition":"attachment; filename=folio-backup.folio-backup.json"});
+  if(route==="/api/export/json") return json(await readSyncSnapshot(),200,{"Content-Disposition":"attachment; filename=folio-export.json"});
   if(route==="/api/export/csv") return new Response(await ordersCsv(),{status:200,headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=folio-orders.csv"}});
-  if(route==="/api/backup/restore"&&method==="POST") { const blocked=authorized("admin");if(blocked)return blocked;const backup=validateBackup(payload.backup);const summary=Object.fromEntries(Object.entries(backup.tables).map(([table,rows])=>[table,rows.length]));if(payload.confirm!==true)return json({valid:true,requiresConfirmation:true,createdAt:backup.createdAt,appVersion:backup.appVersion,summary});await restoreDocument(backup);return json({ok:true,summary}); }
+  if(route==="/api/backup/restore"&&method==="POST") { const blocked=authorized("admin");if(blocked)return blocked;const backup=validateBackup(payload.backup);const summary=Object.fromEntries(Object.entries(backup.tables).map(([table,rows])=>[table,rows.length]));if(payload.confirm!==true)return json({valid:true,requiresConfirmation:true,createdAt:backup.createdAt,appVersion:backup.appVersion,summary});await applySyncSnapshot(backup);return json({ok:true,summary}); }
   if(route==="/api/backup/automatic"&&method==="POST") return json(await automaticBackup());
   if(route==="/api/system/erase"&&method==="POST") {
     const blocked=authorized("admin"); if(blocked)return blocked;
@@ -399,7 +425,27 @@ export async function installDesktopApi() {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     if (!path.startsWith("/api/")) return nativeFetch(input, init);
-    try { return await handleApi(path, (init?.method || "GET").toUpperCase(), init); }
+    try {
+      const method = (init?.method || "GET").toUpperCase();
+      const response = await handleApi(path, method, init);
+      const pathname = new URL(path, "http://folio.local").pathname;
+      const syncable = method !== "GET" && response.ok && /^\/api\/(settings|items|packages|orders|users)(\/|$)/.test(pathname);
+      if (syncable) window.dispatchEvent(new CustomEvent("folio-data-changed"));
+      return response;
+    }
     catch (error) { console.error("[desktop-api]", error); return json({error:error instanceof Error?error.message:"Desktop operation failed."},500); }
   };
+}
+
+export async function readSyncMeta(key: string): Promise<string | null> {
+  const rows = await database.select<Array<{ value: string }>>("SELECT value FROM sync_meta WHERE key=$1", [key]);
+  return rows[0]?.value ?? null;
+}
+
+export async function writeSyncMeta(key: string, value: string): Promise<void> {
+  await database.execute("INSERT INTO sync_meta (key,value) VALUES ($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [key, value]);
+}
+
+export async function removeSyncMeta(key: string): Promise<void> {
+  await database.execute("DELETE FROM sync_meta WHERE key=$1", [key]);
 }

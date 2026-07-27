@@ -1,6 +1,9 @@
 #[cfg(desktop)]
 mod sync_server;
 
+#[cfg(desktop)]
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   let builder = tauri::Builder::default()
@@ -12,10 +15,15 @@ pub fn run() {
   #[cfg(desktop)]
   let builder = {
     let sync_state = sync_server::SyncServerState::default();
-    sync_server::start(sync_state.clone());
     builder
       .manage(sync_state)
-      .invoke_handler(tauri::generate_handler![sync_server::sync_status, sync_server::sync_create_pairing])
+      .invoke_handler(tauri::generate_handler![
+        sync_server::sync_status,
+        sync_server::sync_create_pairing,
+        sync_server::sync_snapshot_state,
+        sync_server::sync_commit_host,
+        sync_server::sync_revoke_device,
+      ])
       .plugin(tauri_plugin_updater::Builder::new().build())
       .plugin(tauri_plugin_process::init())
   };
@@ -27,6 +35,12 @@ pub fn run() {
 
   builder
     .setup(|app| {
+      #[cfg(desktop)]
+      {
+        let data_dir = app.path().app_data_dir()?;
+        let sync_state = app.state::<sync_server::SyncServerState>().inner().clone();
+        sync_server::start(sync_state, data_dir);
+      }
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()

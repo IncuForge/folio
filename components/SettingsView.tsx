@@ -5,6 +5,9 @@ import { useAppContext } from "@/lib/AppContext";
 import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen, RefreshCw, Download } from "lucide-react";
 import { saveResponseToFile } from "@/lib/save-file";
 
+type PairedSyncDevice = { id: string; name: string; pairedAt: number; lastSeenAt: number };
+type LiveSyncStatus = { phase: string; revision: number; pending: boolean; lastSyncedAt?: string; message?: string; conflicts?: number };
+
 export default function SettingsView() {
   const { 
     currentUser, 
@@ -49,7 +52,9 @@ export default function SettingsView() {
   const [updateMessage, setUpdateMessage] = useState("Check GitHub Releases for a newer signed build.");
   const pendingUpdateRef = React.useRef<any>(null);
   const [syncAddress, setSyncAddress] = useState("");
-  const [pairedDevices, setPairedDevices] = useState<string[]>([]);
+  const [pairedDevices, setPairedDevices] = useState<PairedSyncDevice[]>([]);
+  const [syncRevision, setSyncRevision] = useState(0);
+  const [liveSyncStatus, setLiveSyncStatus] = useState<LiveSyncStatus | null>(null);
   const [pairingCode, setPairingCode] = useState("");
   const [pairingExpiresAt, setPairingExpiresAt] = useState(0);
   const [pairingQr, setPairingQr] = useState("");
@@ -77,10 +82,11 @@ export default function SettingsView() {
     if (desktop) {
       import("@tauri-apps/api/app").then(({ getVersion }) => getVersion()).then(setCurrentVersion).catch(() => undefined);
       import("@tauri-apps/api/core")
-        .then(({ invoke }) => invoke<{ address: string; pairedDevices: string[] }>("sync_status"))
+        .then(({ invoke }) => invoke<{ address: string; revision: number; pairedDevices: PairedSyncDevice[] }>("sync_status"))
         .then((status) => {
           setSyncAddress(status.address);
           setPairedDevices(status.pairedDevices);
+          setSyncRevision(status.revision);
         })
         .catch(() => undefined);
     }
@@ -359,14 +365,42 @@ export default function SettingsView() {
     if (!("__TAURI_INTERNALS__" in window) || /android|iphone|ipad|ipod/i.test(navigator.userAgent)) return;
     try {
       const { invoke } = await import("@tauri-apps/api/core");
-      const status = await invoke<{ running: boolean; address: string; pairedDevices: string[] }>("sync_status");
+      const status = await invoke<{ running: boolean; address: string; revision: number; pairedDevices: PairedSyncDevice[] }>("sync_status");
       setSyncAddress(status.address);
       setPairedDevices(status.pairedDevices || []);
+      setSyncRevision(status.revision);
     } catch (error) {
       console.error("Could not read sync status", error);
     }
   };
 
+  useEffect(() => {
+    const update = (event: Event) => setLiveSyncStatus((event as CustomEvent<LiveSyncStatus>).detail);
+    window.addEventListener("folio-sync-status", update);
+    return () => window.removeEventListener("folio-sync-status", update);
+  }, []);
+
+  const revokeSyncDevice = async (deviceId: string) => {
+    if (!window.confirm("Revoke this device? It will stop syncing immediately and must be paired again.")) return;
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("sync_revoke_device", { deviceId });
+      await loadSyncStatus();
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Could not revoke this device.");
+    }
+  };
+  const resolveConflicts = async (choice: "local" | "remote") => {
+    const description = choice === "local" ? "this device's versions" : "the hub versions";
+    if (!window.confirm(`Resolve all current conflicts using ${description}? A recovery backup should be created first.`)) return;
+    try {
+      const { resolveSyncConflicts } = await import("@/desktop/src/sync-coordinator");
+      await resolveSyncConflicts(choice);
+      setLiveSyncStatus((current) => current ? { ...current, phase: "idle", pending: false, conflicts: 0 } : current);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Could not resolve synchronization conflicts.");
+    }
+  };
   const createPairingCode = async () => {
     setPairingLoading(true);
     setErrorMsg("");
@@ -717,7 +751,27 @@ export default function SettingsView() {
                 {pairingLoading ? "Preparing…" : "Pair New Device"}
               </button>
             )}
-            {pairedDevices.length > 0 && <p className="sync-device-count">{pairedDevices.length} paired device{pairedDevices.length === 1 ? "" : "s"}</p>}
+                        <div className="sync-runtime-summary">
+              <span>Hub revision {syncRevision}</span>
+              {liveSyncStatus && <span className={`sync-phase sync-phase-${liveSyncStatus.phase}`}>{liveSyncStatus.phase}{liveSyncStatus.pending ? " · pending" : ""}</span>}
+                            {liveSyncStatus?.message && <span>{liveSyncStatus.message}</span>}
+              {liveSyncStatus?.phase === "conflict" && (
+                <div className="sync-conflict-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => resolveConflicts("local")}>Keep This Device</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => resolveConflicts("remote")}>Use Hub Versions</button>
+                </div>
+              )}
+            </div>
+            {pairedDevices.length > 0 && (
+              <div className="sync-device-list">
+                {pairedDevices.map((device) => (
+                  <div className="sync-device-row" key={device.id}>
+                    <div><strong>{device.name}</strong><span>Last seen {new Date(device.lastSeenAt * 1000).toLocaleString()}</span></div>
+                    <button type="button" className="btn btn-secondary" onClick={() => revokeSyncDevice(device.id)}>Revoke</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

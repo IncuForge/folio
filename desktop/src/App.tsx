@@ -76,13 +76,20 @@ function MobileBackGuard() {
   return exitPrompt ? <div className="mobile-exit-toast" role="status">Swipe back again to exit Folio</div> : null;
 }
 export default function App() {
+  const [dataVersion, setDataVersion] = useState(0);
   const isNativeMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    const reloadData = () => setDataVersion((current) => current + 1);
+    window.addEventListener("folio-data-reloaded", reloadData);
+    return () => window.removeEventListener("folio-data-reloaded", reloadData);
+  }, []);
 
   return (
     <div className={isNativeMobile ? "native-mobile-shell" : "desktop-shell"}>
       {!isNativeMobile && <DesktopTitleBar />}
       {isNativeMobile && <MobileBackGuard />}
-      <AppContextProvider>
+      <AppContextProvider key={dataVersion}>
         <ClientAppLayout><CurrentView /></ClientAppLayout>
       </AppContextProvider>
     </div>
