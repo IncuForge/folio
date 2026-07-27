@@ -66,7 +66,7 @@ export default function SettingsView() {
   }, []);
 
   useEffect(() => {
-    const desktop = "__TAURI_INTERNALS__" in window;
+    const desktop = "__TAURI_INTERNALS__" in window && !/android|iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsDesktopRuntime(desktop);
     if (desktop) {
       import("@tauri-apps/api/app").then(({ getVersion }) => getVersion()).then(setCurrentVersion).catch(() => undefined);

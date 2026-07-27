@@ -376,7 +376,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
                 </div>
               ))}
             </div>
-            <button className="btn btn-primary btn-full-width" onClick={() => {
+            <button data-mobile-back-close className="btn btn-primary btn-full-width" onClick={() => {
               localStorage.setItem("folio-onboarding-dismissed", "1");
               setShowGuide(false);
             }}>Start Using Folio</button>

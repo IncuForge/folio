@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import ClientAppLayout from "@/app/ClientAppLayout";
 import { AppContextProvider } from "@/lib/AppContext";
 import DashboardView from "@/components/DashboardView";
@@ -21,10 +21,67 @@ function CurrentView() {
   return <div className="tab-content-animate">{views[pathname] || <DashboardView />}</div>;
 }
 
+function MobileBackGuard() {
+  const [exitPrompt, setExitPrompt] = useState(false);
+
+  useEffect(() => {
+    const rootState = { ...(window.history.state || {}), folioRoot: true };
+    window.history.replaceState(rootState, "", window.location.href);
+    window.history.pushState({ ...rootState, folioGuard: true }, "", window.location.href);
+
+    let lastBackAt = 0;
+    let promptTimer: number | undefined;
+
+    const restoreGuard = () => {
+      window.history.pushState({ ...rootState, folioGuard: true }, "", window.location.href);
+    };
+
+    const handleBack = () => {
+      const drawer = document.querySelector<HTMLElement>(".mobile-hamburger-drawer.open");
+      if (drawer) {
+        document.querySelector<HTMLButtonElement>('.mobile-actions button[title="Toggle Menu"]')?.click();
+        restoreGuard();
+        return;
+      }
+
+      const modalClose = document.querySelector<HTMLButtonElement>(".modal-overlay .btn-close-modal, .modal-overlay [data-mobile-back-close]");
+      if (modalClose) {
+        modalClose.click();
+        restoreGuard();
+        return;
+      }
+
+      if (window.location.pathname !== "/") return;
+
+      const now = Date.now();
+      if (now - lastBackAt < 2000) {
+        void import("@tauri-apps/api/window").then(({ getCurrentWindow }) => getCurrentWindow().close());
+        return;
+      }
+
+      lastBackAt = now;
+      setExitPrompt(true);
+      window.clearTimeout(promptTimer);
+      promptTimer = window.setTimeout(() => setExitPrompt(false), 2000);
+      restoreGuard();
+    };
+
+    window.addEventListener("popstate", handleBack);
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+      window.clearTimeout(promptTimer);
+    };
+  }, []);
+
+  return exitPrompt ? <div className="mobile-exit-toast" role="status">Swipe back again to exit Folio</div> : null;
+}
 export default function App() {
+  const isNativeMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
   return (
-    <div className="desktop-shell">
-      <DesktopTitleBar />
+    <div className={isNativeMobile ? "native-mobile-shell" : "desktop-shell"}>
+      {!isNativeMobile && <DesktopTitleBar />}
+      {isNativeMobile && <MobileBackGuard />}
       <AppContextProvider>
         <ClientAppLayout><CurrentView /></ClientAppLayout>
       </AppContextProvider>

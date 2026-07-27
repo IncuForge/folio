@@ -636,6 +636,73 @@ body {
   }
 }
 
+/* Native Android shell */
+.native-mobile-shell {
+  min-height: 100dvh;
+  background: var(--bg-app);
+  overscroll-behavior-y: none;
+}
+
+.native-mobile-shell .app-container { min-height: 100dvh; }
+.native-mobile-shell .mobile-header,
+.native-mobile-shell .mobile-bottom-nav { display: flex !important; }
+.native-mobile-shell .sidebar { display: none !important; }
+.native-mobile-shell .mobile-hamburger-drawer {
+  top: calc(56px + env(safe-area-inset-top, 0px));
+}
+.native-mobile-shell .mobile-header {
+  height: calc(56px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+.native-mobile-shell .mobile-bottom-nav {
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-right: max(0.25rem, env(safe-area-inset-right, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(0.25rem, env(safe-area-inset-left, 0px));
+}
+.native-mobile-shell .main-content {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-top: calc(56px + env(safe-area-inset-top, 0px));
+  margin-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+.native-mobile-shell :is(button, a, input, select, textarea) { -webkit-tap-highlight-color: transparent; }
+.native-mobile-shell :is(input, select, textarea) { font-size: max(16px, 1em); }
+
+@media (max-width: 520px) {
+  .native-mobile-shell .main-content {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0; gap: 1rem; padding-top: 1rem; padding-bottom: 1rem; }
+  .native-mobile-shell .glass-card { padding: 1rem; }
+  .native-mobile-shell .modal-overlay {
+    align-items: flex-end;
+    padding: max(0.75rem, env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px)) max(0.75rem, env(safe-area-inset-bottom, 0px)) max(0.75rem, env(safe-area-inset-left, 0px));
+  }
+}
+.mobile-exit-toast {
+  position: fixed;
+  right: 50%;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  z-index: 10001;
+  transform: translateX(50%);
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--border-ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: folio-toast-in 160ms ease-out;
+}
+@keyframes folio-toast-in { from { opacity: 0; transform: translate(50%, 8px); } }
 /* Calendar styling */
 .calendar-grid {
   display: grid;
