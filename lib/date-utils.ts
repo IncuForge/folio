@@ -37,14 +37,10 @@ export function getDaysDifference(dateString: string): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
-export function getOrderPaymentStatusClass(order: Order): string {
+export function getOrderPaymentStatusClass(order: Order, packages?: Package[]): string {
   const isPast = isPastEvent(order.event_date);
   
-  const booking_paid = isTruthy(order.booking_paid);
-  const second_paid = isTruthy(order.second_paid);
-  const final_paid = isTruthy(order.final_paid);
-
-  if (booking_paid && second_paid && final_paid) {
+  if (calculatePendingOrderCost(order, packages) <= 0.01) {
     return "payment-paid";
   }
 
@@ -60,14 +56,10 @@ export function getOrderPaymentStatusClass(order: Order): string {
   return "payment-active";
 }
 
-export function getOrderPaymentStatusLabel(order: Order): string {
+export function getOrderPaymentStatusLabel(order: Order, packages?: Package[]): string {
   const isPast = isPastEvent(order.event_date);
   
-  const booking_paid = isTruthy(order.booking_paid);
-  const second_paid = isTruthy(order.second_paid);
-  const final_paid = isTruthy(order.final_paid);
-
-  if (booking_paid && second_paid && final_paid) {
+  if (calculatePendingOrderCost(order, packages) <= 0.01) {
     return "Fully Settled";
   }
   if (isPast) {

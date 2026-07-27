@@ -193,8 +193,8 @@ export default function OrdersBookView() {
               </div>
               <div className="badges-wrapper">
                 <span className={`status-badge status-${order.status}`}>{order.status}</span>
-                <span className={`payment-timeline-badge ${getOrderPaymentStatusClass(order)}`}>
-                  {getOrderPaymentStatusLabel(order)}
+                <span className={`payment-timeline-badge ${getOrderPaymentStatusClass(order, packages)}`}>
+                  {getOrderPaymentStatusLabel(order, packages)}
                 </span>
               </div>
             </div>

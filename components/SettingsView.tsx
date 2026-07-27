@@ -13,6 +13,8 @@ export default function SettingsView() {
     currentUser, 
     pdfBrandName, 
     setPdfBrandName, 
+    pdfBrandLogo,
+    setPdfBrandLogo,
     currencySymbol, 
     setCurrencySymbol,
     paymentMethods,
@@ -38,6 +40,7 @@ export default function SettingsView() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [localBrandName, setLocalBrandName] = useState("");
+  const [localBrandLogo, setLocalBrandLogo] = useState("");
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restorePreview, setRestorePreview] = useState<any>(null);
   const [restoreLoading, setRestoreLoading] = useState(false);
@@ -63,6 +66,10 @@ export default function SettingsView() {
   useEffect(() => {
     setLocalBrandName(pdfBrandName || "");
   }, [pdfBrandName]);
+
+  useEffect(() => {
+    setLocalBrandLogo(pdfBrandLogo || "");
+  }, [pdfBrandLogo]);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -587,6 +594,37 @@ export default function SettingsView() {
             />
           </div>
 
+
+          <div className="form-group" style={{ width: "100%", marginTop: "1rem" }}>
+            <label className="form-label" style={{ fontSize: "0.75rem" }}>Business Owner Logo (Optional)</label>
+            <div className="receipt-logo-setting">
+              {localBrandLogo ? <img src={localBrandLogo} alt="Business owner logo preview" className="receipt-logo-preview" /> : <div className="receipt-logo-placeholder">No logo</div>}
+              <div className="receipt-logo-actions">
+                <label className="btn btn-secondary btn-sm">
+                  <Upload size={15} /> Choose Logo
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.currentTarget.value = "";
+                    if (!file) return;
+                    if (file.size > 1024 * 1024) {
+                      setErrorMsg("The business logo must be 1 MB or smaller.");
+                      setTimeout(() => setErrorMsg(""), 4000);
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => setLocalBrandLogo(String(reader.result || ""));
+                    reader.onerror = () => {
+                      setErrorMsg("The selected logo could not be read.");
+                      setTimeout(() => setErrorMsg(""), 4000);
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
+                {localBrandLogo && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setLocalBrandLogo("")}>Remove</button>}
+                <small>PNG, JPEG, WebP, or SVG. Maximum 1 MB. Stored with Folio settings and backups.</small>
+              </div>
+            </div>
+          </div>
           <div className="form-group" style={{ width: "100%", marginTop: "1rem" }}>
             <label className="form-label" style={{ fontSize: "0.75rem" }}>System Currency Symbol</label>
             <input
@@ -672,10 +710,11 @@ export default function SettingsView() {
                   const res = await fetch("/api/settings", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pdfBrandName: localBrandName })
+                    body: JSON.stringify({ pdfBrandName: localBrandName, pdfBrandLogo: localBrandLogo })
                   });
                   if (res.ok) {
                     setPdfBrandName(localBrandName);
+                    setPdfBrandLogo(localBrandLogo);
                     setSuccessMsg("Brand settings saved successfully.");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     setTimeout(() => setSuccessMsg(""), 4000);

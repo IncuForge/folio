@@ -33,6 +33,8 @@ interface AppContextType {
   setPrintMenuOrder: (order: Order | null) => void;
   pdfBrandName: string;
   setPdfBrandName: (name: string) => void;
+  pdfBrandLogo: string;
+  setPdfBrandLogo: (logo: string) => void;
   currencySymbol: string;
   setCurrencySymbol: (val: string) => void;
   paymentMethods: string[];
@@ -223,6 +225,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   }, []);
   const [printMenuOrder, setPrintMenuOrder] = useState<Order | null>(null);
   const [pdfBrandName, setPdfBrandName] = useState<string>("Cater Flow Premium Catering");
+  const [pdfBrandLogo, setPdfBrandLogo] = useState<string>("");
   const [currencySymbol, setCurrencySymbolState] = useState<string>("₹");
   const [paymentMethods, setPaymentMethodsState] = useState<string[]>(["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]);
 
@@ -331,6 +334,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       if (res.ok) {
         const data = await res.json();
         if (data.pdfBrandName !== undefined) setPdfBrandName(data.pdfBrandName);
+        if (data.pdfBrandLogo !== undefined) setPdfBrandLogo(data.pdfBrandLogo);
         if (data.currencySymbol !== undefined) setCurrencySymbolState(data.currencySymbol);
         if (data.paymentMethods !== undefined) {
           try {
@@ -806,6 +810,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setPrintMenuOrder,
     pdfBrandName,
     setPdfBrandName,
+    pdfBrandLogo,
+    setPdfBrandLogo,
     currencySymbol,
     setCurrencySymbol,
     paymentMethods,
@@ -864,6 +870,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     selectedOrder,
     printMenuOrder,
     pdfBrandName,
+    pdfBrandLogo,
     currencySymbol,
     paymentMethods,
     kitchenSheetOrder,

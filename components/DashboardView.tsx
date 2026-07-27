@@ -246,8 +246,8 @@ export default function DashboardView() {
                       <strong>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString("en-IN")}</strong>
                     </td>
                     <td className="td-cell">
-                      <span className={`payment-timeline-badge ${getOrderPaymentStatusClass(order)}`}>
-                        {getOrderPaymentStatusLabel(order)}
+                      <span className={`payment-timeline-badge ${getOrderPaymentStatusClass(order, packages)}`}>
+                        {getOrderPaymentStatusLabel(order, packages)}
                       </span>
                     </td>
                     <td className="td-cell">

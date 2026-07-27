@@ -3426,7 +3426,12 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
+  isolation: isolate;
 }
+
+.print-bill-page > *:not(.bill-incuforge-watermark) { position: relative; z-index: 1; }
+.bill-incuforge-watermark { position:absolute;z-index:0;width:19rem;height:19rem;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;opacity:.035;pointer-events:none;user-select:none; }
 
 @media print {
   .print-presentation-wrapper {
@@ -3451,6 +3456,15 @@ body {
   padding-bottom: 1.5rem;
   margin-bottom: 2rem;
 }
+
+.bill-logo-section { display:flex; align-items:center; gap:1rem; min-width:0; }
+.bill-owner-logo { width:4.25rem; height:4.25rem; object-fit:contain; flex:0 0 auto; }
+.receipt-logo-setting { display:flex; align-items:center; gap:1rem; margin-top:.45rem; }
+.receipt-logo-preview, .receipt-logo-placeholder { width:5rem; height:5rem; border:1px solid var(--border-ink); background:var(--bg-app); object-fit:contain; }
+.receipt-logo-placeholder { display:grid; place-items:center; color:var(--ink-muted); font-size:.72rem; }
+.receipt-logo-actions { display:flex; align-items:flex-start; flex-wrap:wrap; gap:.5rem; }
+.receipt-logo-actions small { flex-basis:100%; color:var(--ink-muted); }
+@media(max-width:560px) { .receipt-logo-setting { align-items:flex-start; } }
 
 .bill-brand-title {
   font-family: var(--font-instrument-serif), Georgia, serif !important;
@@ -5005,4 +5019,47 @@ html {
 .incuforge-watermark {
   align-items: center;
   padding-bottom: 0;
+}
+/* Stable desktop icon rail: labels collapse without moving icon centers. */
+@media (min-width: 1024px) {
+  .sidebar-header,
+  .sidebar-collapsed .sidebar-header {
+    justify-content: flex-start;
+    padding-left: 16px;
+    padding-right: 16px;
+    transition-property: none !important;
+  }
+
+  .sidebar-brand,
+  .sidebar-collapsed .sidebar-brand {
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .sidebar-nav,
+  .sidebar-bottom-container,
+  .sidebar-collapsed .sidebar-nav,
+  .sidebar-collapsed .sidebar-bottom-container {
+    padding-left: 7px;
+    padding-right: 7px;
+    transition-property: none !important;
+  }
+
+  .sidebar-item-btn,
+  .sidebar-collapsed .sidebar-item-btn {
+    justify-content: flex-start;
+    gap: 12px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .sidebar-item-icon,
+  .brand-icon-lg {
+    flex: 0 0 20px;
+  }
+
+  .sidebar-collapsed .sidebar-brand,
+  .sidebar-collapsed .sidebar-item-btn {
+    gap: 0;
+  }
 }

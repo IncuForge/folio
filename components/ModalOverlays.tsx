@@ -46,6 +46,7 @@ export default function ModalOverlays() {
     packages,
     items,
     pdfBrandName,
+    pdfBrandLogo,
     currencySymbol,
     paymentMethods,
   } = useAppContext();
@@ -226,9 +227,9 @@ export default function ModalOverlays() {
 
     const brand = pdfBrandName || "Cater Flow Premium Catering";
     
-    const getBillPaymentText = (paid: boolean, amount: number, notesString: string) => {
+    const getBillPaymentText = (paid: boolean, amount: number, notesString: string, settled = false) => {
       const formattedAmount = Number(amount || 0).toLocaleString("en-IN");
-      if (!paid) return `${currencySymbol}${formattedAmount} Pending`;
+      if (!paid) return settled ? "Not required — invoice settled" : `${currencySymbol}${formattedAmount} Pending`;
       const details = parsePaymentNotes(notesString);
       if (details.isStructured) {
         const modeLabel = details.mode ? ` via ${details.mode}` : "";
@@ -246,6 +247,8 @@ export default function ModalOverlays() {
     const second_paid = isTruthy(order.second_paid);
     const final_paid = isTruthy(order.final_paid);
 
+    const fullySettled = calculatePendingOrderCost(order, packages) <= 0.01;
+
     const paidAmount = 
       (booking_paid ? (Number(order.booking_amount) || 0) : 0) +
       (second_paid ? (Number(order.second_amount) || 0) : 0) +
@@ -255,6 +258,7 @@ export default function ModalOverlays() {
       <div className="print-presentation-wrapper">
         {/* Bill invoice page (appended to the end, styled as a separate printable page) */}
         <div className="print-bill-page">
+          <img className="bill-incuforge-watermark" src="/brand/incuforge-if-black-solid.svg" alt="" aria-hidden="true" />
           <table className="print-layout-table">
             <thead>
               <tr>
@@ -262,8 +266,11 @@ export default function ModalOverlays() {
                   <div className="print-page-header-spacer"></div>
                   <header className="bill-header">
                     <div className="bill-logo-section">
-                      <h2 className="bill-brand-title">{brand}</h2>
-                      <span className="bill-brand-tag">by Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>IncuForge</a> @ 2026</span>
+                      {pdfBrandLogo && <img className="bill-owner-logo" src={pdfBrandLogo} alt="" />}
+                      <div>
+                        <h2 className="bill-brand-title">{brand}</h2>
+                        <span className="bill-brand-tag">by Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>IncuForge</a> @ 2026</span>
+                      </div>
                     </div>
                     <div className="bill-invoice-title">
                       <h1>EVENT RECEIPT</h1>
@@ -413,19 +420,19 @@ export default function ModalOverlays() {
                         <div className="bill-milestone-row">
                           <span>1st Payment (Booking Deposit):</span>
                           <span className={order.booking_paid ? "paid-text" : "pending-text"}>
-                            {getBillPaymentText(order.booking_paid, order.booking_amount, order.booking_payment_notes)}
+                            {getBillPaymentText(order.booking_paid, order.booking_amount, order.booking_payment_notes, fullySettled)}
                           </span>
                         </div>
                         <div className="bill-milestone-row">
                           <span>2nd Payment (Midway Installment):</span>
                           <span className={order.second_paid ? "paid-text" : "pending-text"}>
-                            {getBillPaymentText(order.second_paid, order.second_amount, order.second_payment_notes)}
+                            {getBillPaymentText(order.second_paid, order.second_amount, order.second_payment_notes, fullySettled)}
                           </span>
                         </div>
                         <div className="bill-milestone-row">
                           <span>Final Payment (Event Settlement):</span>
                           <span className={order.final_paid ? "paid-text" : "pending-text"}>
-                            {getBillPaymentText(order.final_paid, order.final_amount, order.final_payment_notes)}
+                            {getBillPaymentText(order.final_paid, order.final_amount, order.final_payment_notes, fullySettled)}
                           </span>
                         </div>
                       </div>

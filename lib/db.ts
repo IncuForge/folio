@@ -1205,6 +1205,13 @@ export const settings = {
   }
 };
 
+/** Executes parameterized SQL through the active direct-SQL driver (Postgres or local SQLite). */
+export async function sqlQuery<T = Record<string, unknown>>(sql: string, values: unknown[] = []): Promise<T[]> {
+  return pgQuery<T>(sql, values);
+}
+
+/** True for direct Postgres and the local SQLite runtime; false for Supabase. */
+export const isSqlDatabase = Boolean(pgPool);
 // ---------------------------------------------------------------------------
 // Re-export raw clients and dynamic query helper for exporters
 // ---------------------------------------------------------------------------
