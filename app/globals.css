@@ -4963,3 +4963,46 @@ html {
     padding-inline: 0;
   }
 }
+/* Neutral monochrome theme and full-height desktop rail. */
+:root {
+  --text-main: var(--ink);
+  --text-muted: var(--ink-muted);
+  --card-bg: var(--bg-card);
+  --hover-bg: var(--bg-card-hover);
+  --glass-border: var(--border-ink);
+}
+.dark {
+  --bg-app: #000000;
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #171717;
+  --ink: #ffffff;
+  --ink-muted: #b8b8b8;
+  --border-ink: #383838;
+  --border-strong: #ffffff;
+  --brand-primary: #ffffff;
+  --brand-light: #1a1a1a;
+  --text-main: #ffffff;
+  --text-muted: #b8b8b8;
+  --card-bg: #0a0a0a;
+  --hover-bg: #171717;
+  --glass-border: #383838;
+}
+
+@media (min-width: 1024px) {
+  .desktop-shell:has(> .desktop-titlebar) .sidebar {
+    top: 0;
+    padding-top: calc(38px + 0.9rem);
+  }
+  .desktop-shell:has(> .desktop-titlebar) .sidebar-collapse-trigger {
+    top: calc(38px + 1.5rem);
+  }
+  .desktop-shell:has(> .desktop-titlebar) .sidebar-header {
+    min-height: 32px;
+    height: 32px;
+  }
+}
+
+.incuforge-watermark {
+  align-items: center;
+  padding-bottom: 0;
+}
