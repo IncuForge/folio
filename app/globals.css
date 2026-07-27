@@ -4507,3 +4507,56 @@ body {
   .native-mobile-shell .login-title { font-size: 1.7rem !important; }
   .native-mobile-shell .login-subtitle { font-size: 0.82rem; }
 }
+/* Themed scrollbars and consistent component rhythm */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink-muted) 72%, transparent) var(--bg-app);
+}
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--bg-app); }
+*::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border: 2px solid var(--bg-app);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-muted) 72%, transparent);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
+*::-webkit-scrollbar-corner { background: var(--bg-app); }
+
+/* Keep content groups on a predictable 4/8px-derived rhythm. */
+.desktop-shell .settings-panel { gap: 1.15rem; }
+.desktop-shell .panel-title + .panel-desc { margin-top: -0.15rem; }
+.desktop-shell .panel-desc + :is(.panel-actions-list, .btn, .form-group) { margin-top: 0.2rem; }
+.desktop-shell .settings-panel-branding .form-group { margin-top: 0.15rem !important; }
+.desktop-shell .settings-panel-branding .form-group + .form-group { margin-top: 0.35rem !important; }
+.desktop-shell .settings-panel-section { gap: 0.85rem; padding-top: 1.15rem; }
+.desktop-shell .settings-panel-section > .panel-desc { margin-top: 0 !important; }
+.desktop-shell .settings-checkbox-row + .settings-inline-fields { margin-top: 0.1rem; }
+.desktop-shell .panel-actions-list { gap: 0.8rem; }
+
+.desktop-shell .empty-state-card {
+  gap: 0.55rem;
+  padding: 2.25rem 1.25rem;
+}
+.desktop-shell .empty-state-icon-wrapper,
+.desktop-shell .empty-state-desc { margin: 0; }
+.desktop-shell .empty-state-title { margin-top: 0.1rem; }
+.desktop-shell .empty-state-desc { line-height: 1.55; }
+.desktop-shell .empty-state-desc + .btn,
+.desktop-shell .empty-state-title + .btn { margin-top: 0.55rem; }
+
+.desktop-shell .filter-card { row-gap: 1rem !important; column-gap: 1.25rem !important; }
+.desktop-shell .schedule-tabs-container { margin-bottom: 0.25rem; }
+.desktop-shell .schedule-panel,
+.desktop-shell .orders-list-panel { gap: 1.25rem; }
+
+@media (max-width: 640px) {
+  .native-mobile-shell .settings-panel { gap: 1rem; }
+  .native-mobile-shell .settings-panel-branding .form-group { margin-top: 0 !important; }
+  .native-mobile-shell .empty-state-card { gap: 0.5rem; padding: 1.5rem 0.9rem; }
+  .native-mobile-shell .empty-state-icon-wrapper,
+  .native-mobile-shell .empty-state-desc { margin: 0; }
+  .native-mobile-shell .empty-state-desc + .btn,
+  .native-mobile-shell .empty-state-title + .btn { margin-top: 0.5rem; }
+}
