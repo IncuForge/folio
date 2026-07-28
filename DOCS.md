@@ -6,12 +6,13 @@ This document covers the full technical internals of Folio for developers mainta
 
 ## Architecture Overview
 
-Folio is a **Next.js 16 App Router** application with:
+Folio has three maintained application surfaces:
 
-- **Frontend**: React (client components), Vanilla CSS design system
-- **Backend**: Next.js API routes (server-side, `/api/*`)
-- **Database**: Dual-mode adapter — Supabase cloud SDK *or* direct PostgreSQL via `pg` pool
-- **Auth**: Custom HTTP-only cookie session (no NextAuth, no Supabase Auth)
+- **Web**: Next.js 16 App Router, React client components, API routes, and the Folio Ledger CSS system.
+- **Desktop**: Tauri 2 shell with a local SQLite database, updater, backups, and optional LAN synchronization hub.
+- **Android**: Native Flutter client with its own offline SQLite workspace and optional pairing to Folio Desktop.
+
+The hosted web backend can use Supabase or direct PostgreSQL. Web authentication uses a signed HTTP-only cookie session. Desktop owns its local data and Android stores pairing credentials in OS-backed encrypted storage.
 
 ---
 
@@ -31,8 +32,8 @@ Activated when `DATABASE_URL` is set. This takes priority over Supabase credenti
 - Designed for Docker with local PostgreSQL 16
 - Optional SeaweedFS (Apache 2.0) for S3-compatible image storage
 
-### SQLite Mode (Tests Only)
-The test runner (`tests/`) injects a SQLite in-memory database via Node's built-in `sqlite` module. The adapter auto-switches when `NODE_TEST_CONTEXT` is set.
+### SQLite Mode (Desktop and Tests)
+Folio Desktop uses the SQLite adapter in `desktop/src/desktop-api.ts` and the Tauri runtime so the installed application does not require PostgreSQL. The Node test runner injects an isolated SQLite database when `NODE_TEST_CONTEXT` is set. Flutter Android owns a separate SQLite cache/workspace and exchanges versioned snapshots through the desktop synchronization server.
 
 ---
 
@@ -125,6 +126,9 @@ Restore validates the document before enabling replacement and downloads a fresh
 | `lib/db.ts` | Dual-mode database adapter |
 | `lib/schema.sql` | PostgreSQL schema and seed data |
 | `types/schema.ts` | TypeScript type definitions |
+| `desktop/` | Tauri renderer bridge, custom titlebar, desktop adapter, and synchronization coordination |
+| `src-tauri/` | Rust desktop shell, SQLite commands, updater, local server, and synchronization hub |
+| `mobile/folio_mobile/` | Native Flutter Android client with layered UI, repository, and service architecture |
 
 ### View Components
 | Component | View |
@@ -143,7 +147,7 @@ Restore validates the document before enabling replacement and downloads a fresh
 
 ## Design System
 
-Folio uses a **warm paper / ink aesthetic** — no Tailwind, pure CSS custom properties.
+Folio uses the **Folio Ledger** interface system: restrained operational surfaces, Switzer typography, semantic status colors, and pure CSS custom properties on web/desktop. Flutter mirrors the same tokens with Material components and native Android navigation.
 
 Key CSS variables (defined in `app/globals.css`):
 ```css
@@ -186,20 +190,23 @@ SESSION_SECRET=a_long_random_secret_key
 
 ```bash
 npm run test
+npm run android:analyze
+npm run android:test
 ```
 
-Tests use Node's built-in `node:test` runner with a SQLite in-memory database. No external services required.
+The web/desktop tests use Node's built-in `node:test` runner with an isolated SQLite database. Flutter analysis and tests run from `mobile/folio_mobile/`. No external database service is required.
 
 ---
 
-## Production Build
+## Production Builds
 
 ```bash
 npm run build
-npm run start
+npm run desktop:build
+npm run android:build
 ```
 
-The app is configured with `output: "standalone"` for Docker multi-stage builds.
+The Next.js app is configured with `output: "standalone"` for Docker multi-stage builds. Native desktop packages are created by the Tauri workflow. `npm run android:build` creates optimized Flutter APKs split by Android architecture.
 
 ---
 
@@ -230,6 +237,10 @@ allowedDevOrigins: []
 
 - **Folio** — proprietary / private (IncuForge)
 - **Next.js** — MIT
+- **Tauri** — Apache-2.0 or MIT
+- **Flutter** — BSD-3-Clause
+- **SQLite** — public domain
+- **Switzer** — ITF Free Font License
 - **PostgreSQL** — PostgreSQL Licence
 - **SeaweedFS** — Apache 2.0
 - **Supabase JS** — MIT

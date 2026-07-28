@@ -43,20 +43,26 @@ The project intentionally keeps downloadable builds in GitHub Actions artifacts 
 
 ## Android companion
 
-The Android build uses the same Tauri 2 frontend and mobile-responsive Folio interface.
+The Android companion is a native Flutter application under `mobile/folio_mobile/`. It does not embed the desktop Tauri/WebView frontend and it never starts the desktop LAN server or updater.
 
-- Android can create an independent local workspace or pair with a Folio desktop hub.
-- Pairing uses the QR code and short-lived code shown under **Settings → Devices & Sync** on desktop.
-- On the same Wi-Fi network, use the desktop's LAN address.
-- For remote private access, connect both devices through a VPN such as Tailscale and pair using that address.
-- If the hub is unavailable, local work remains available and synchronization resumes when the connection returns.
-- The desktop LAN webserver and desktop updater are not started by the Android build.
+Available now:
 
-The current Android workflow produces an ARM64 debug artifact named:
+- Choose a phone-only SQLite workspace or pair with a Folio Desktop hub.
+- Work offline across Today, Orders, Calendar, Kitchen, Customers, Food Library, Reports, and Settings.
+- Create orders and create/edit customers and dishes using native Flutter screens.
+- Store pairing credentials in Android encrypted storage.
+- Synchronize manually with explicit conflict recovery when the desktop is reachable.
+- Use the desktop LAN address on the same Wi-Fi network, or a private VPN/Tailscale address remotely.
+
+Pairing currently uses the desktop address and short-lived code shown under **Settings → Devices & Sync**. QR scanning, automatic background retry, mobile role sessions, and full package/payment/receipt parity remain documented release gates in [docs/FOLIO_MOBILE_ARCHITECTURE.md](docs/FOLIO_MOBILE_ARCHITECTURE.md).
+
+GitHub Actions builds optimized split release APKs for 32-bit ARM, ARM64, and x86-64. Download the workflow artifact:
 
 ```text
-folio-android-debug
+folio-android-release-apks
 ```
+
+These CI APKs currently use the development signing configuration. Production Play Store distribution still requires an external release keystore and signing configuration.
 
 ## Authentication and roles
 
@@ -89,7 +95,8 @@ Existing installations using legacy symbol-only settings are migrated automatica
 
 - Node.js 22 recommended
 - npm
-- No local Rust toolchain is required when using GitHub Actions to build desktop and Android binaries
+- Rust is only required for local native desktop packaging; GitHub Actions can build desktop binaries without installing Rust locally
+- Flutter stable and Java 17 are required only when building Android locally
 
 ### Install and run the Next.js application
 
@@ -113,7 +120,25 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run desktop:dev
 ```
 
-A complete native Tauri development build additionally requires the Rust and platform prerequisites documented by Tauri. If those are intentionally not installed locally, push the branch and download the GitHub Actions artifact instead.
+A complete native Tauri desktop build additionally requires Rust and the platform prerequisites documented by Tauri. If those are intentionally not installed locally, push the branch and download the **Folio Desktop** GitHub Actions artifact instead.
+
+### Run and build the Flutter Android companion
+
+```bash
+cd mobile/folio_mobile
+flutter pub get --enforce-lockfile
+flutter analyze
+flutter test
+flutter run
+```
+
+Build the same optimized split APKs produced by GitHub Actions:
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+The APKs are written to `mobile/folio_mobile/build/app/outputs/flutter-apk/`.
 
 ## Validation
 
@@ -122,6 +147,10 @@ npx tsc --noEmit
 npm test
 npm run build
 npm run desktop:build
+
+cd mobile/folio_mobile
+flutter analyze
+flutter test
 ```
 
 The test suite uses Node's built-in test runner and an isolated SQLite database. It does not require a running PostgreSQL or Supabase service.
@@ -146,9 +175,9 @@ The desktop application's embedded SQLite workflow does not require bundling Pos
 |---|---|
 | **Folio CI** | TypeScript, tests, Next.js production build, and desktop renderer build |
 | **Folio Desktop** | Windows, Linux, macOS Apple Silicon, and macOS Intel bundles |
-| **Folio Android** | ARM64 Android debug APK |
+| **Folio Android** | Flutter analysis/tests and optimized 32-bit ARM, ARM64, and x86-64 release APKs |
 
-All workflows run on pushes to `main` and `codex/**`. They can also be started manually from the Actions tab.
+The CI and desktop workflows run for their configured branches. The Android workflow runs when its Flutter source or workflow changes, and every workflow can also be started manually from the Actions tab.
 
 ## Project structure
 
@@ -157,7 +186,8 @@ All workflows run on pushes to `main` and `codex/**`. They can also be started m
 | `app/` | Next.js application, API routes, global styling, and setup flow |
 | `components/` | Dashboard, orders, customers, calendar, library, reports, settings, and document UI |
 | `desktop/` | Tauri renderer integration, desktop database adapter, synchronization, and custom titlebar |
-| `src-tauri/` | Rust application shell, permissions, bundling, Android generation, updater, and local server |
+| `src-tauri/` | Rust desktop application shell, permissions, bundling, updater, synchronization hub, and local server |
+| `mobile/folio_mobile/` | Native Flutter Android client, SQLite workspace, secure pairing, and synchronization UI |
 | `lib/` | Database adapters, authentication, backups, currency support, business logic, and shared state |
 | `tests/` | API, database, sync, and currency compatibility tests |
 | `.github/workflows/` | CI, desktop packaging, and Android artifact workflows |
@@ -171,6 +201,8 @@ All workflows run on pushes to `main` and `codex/**`. They can also be started m
 | [DOCKER_SETUP.md](DOCKER_SETUP.md) | PostgreSQL/Docker deployment |
 | [supabase_guide.md](supabase_guide.md) | Supabase deployment |
 | [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) | Product direction and planned work |
+| [docs/FOLIO_DESIGN_SYSTEM.md](docs/FOLIO_DESIGN_SYSTEM.md) | Shared desktop, web, and Android interface system |
+| [docs/FOLIO_MOBILE_ARCHITECTURE.md](docs/FOLIO_MOBILE_ARCHITECTURE.md) | Flutter architecture, offline behavior, synchronization, and release gates |
 
 ## Built by
 

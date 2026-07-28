@@ -2,12 +2,17 @@
 
 This roadmap separates low-risk quality-of-life improvements from capabilities that materially change Folio's operating model. Items are ordered by customer value and architectural dependency.
 
+## Current foundation
+
+- Tauri desktop hub with local SQLite, backups, updates, and LAN synchronization.
+- Native Flutter Android client with phone-only or paired setup, offline SQLite, encrypted pairing credentials, a transactional outbox, and explicit conflict recovery.
+- Shared Folio Ledger design tokens, Switzer typography, accessible focus handling, and reduced-motion behavior.
+
 ## Immediate product-quality work
 
 ### Reliability and data safety
 
 - Finish encrypted and authenticated synchronization transport; require an encrypted VPN until then.
-- Store Android device credentials in OS-backed secure storage rather than ordinary SQLite or browser storage.
 - Add a per-record conflict review screen, sync diagnostics export, retry history, and “last successful sync” health checks.
 - Verify restore files before replacing the database, retain pre-restore recovery snapshots, and periodically test backups automatically.
 - Add schema migration versioning, crash reporting with opt-in redaction, structured logs, and database integrity checks.

@@ -21,3 +21,24 @@ Native Flutter client for Folio Local. It does not host a LAN server. It can pai
 - `data/services/`: HTTP, secure storage and SQLite adapters
 
 See `../../docs/FOLIO_MOBILE_ARCHITECTURE.md` for the sync contract, offline rules and release gates.
+
+## Local verification
+
+```bash
+flutter pub get --enforce-lockfile
+flutter analyze
+flutter test
+flutter run
+```
+
+Build optimized per-architecture APKs:
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+GitHub Actions uploads these as `folio-android-release-apks`. The current CI build uses the development signing configuration; configure an external release keystore before Play Store distribution.
+
+## Current boundary
+
+The Android client is not yet a complete replacement for every desktop workflow. Mobile role authentication, package-kit and payment parity, receipt/preparation exports, automatic retry, and QR scanning remain release gates. See `../../docs/FOLIO_MOBILE_ARCHITECTURE.md` for the authoritative list.

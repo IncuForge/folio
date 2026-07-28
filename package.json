@@ -11,10 +11,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --import tsx --test tests/db.test.ts tests/api.test.ts tests/sync.test.ts tests/currency.test.ts",
-    "android:init": "tauri android init",
-    "android:dev": "tauri android dev",
-    "android:build": "tauri android build --apk",
-    "android:patch": "node scripts/patch-android-theme.mjs"
+    "android:get": "cd mobile/folio_mobile && flutter pub get --enforce-lockfile",
+    "android:analyze": "cd mobile/folio_mobile && flutter analyze",
+    "android:test": "cd mobile/folio_mobile && flutter test",
+    "android:dev": "cd mobile/folio_mobile && flutter run",
+    "android:build": "cd mobile/folio_mobile && flutter build apk --release --split-per-abi"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
