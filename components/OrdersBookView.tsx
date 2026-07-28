@@ -156,7 +156,7 @@ export default function OrdersBookView() {
               setFilterDate("");
               setFilterStatus("");
             }}
-            style={{ height: "34px", display: "inline-flex", alignItems: "center", padding: "0 0.75rem" }}
+            style={{ display: "inline-flex", alignItems: "center" }}
           >
             Clear
           </button>

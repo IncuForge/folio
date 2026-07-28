@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./folio-ledger.css";
 import { AppContextProvider } from "@/lib/AppContext";
 import ClientAppLayout from "./ClientAppLayout";
 import Script from "next/script";

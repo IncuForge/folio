@@ -5,10 +5,16 @@ import { getCurrencyOptions } from "@/lib/currencies";
 import Sidebar from "@/components/Sidebar";
 import ModalOverlays from "@/components/ModalOverlays";
 import CommandPalette from "@/components/CommandPalette";
+import { FolioPageTransition } from "@/components/FolioMotion";
+import AccessibilityBridge from "@/components/AccessibilityBridge";
+import { useDialogFocus } from "@/components/useDialogFocus";
 import { useAppContext } from "@/lib/AppContext";
 const FolioLogo = ({ pulse = false }: { pulse?: boolean }) => (
   <div className={`login-logo${pulse ? " animate-pulse" : ""}`}>
-    <img src="/icon.svg" alt="Folio" />
+    <svg role="img" aria-label="Folio" viewBox="0 0 32 32" width="52" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="6" fill="#faf9f6" />
+      <path d="M9 7h14c2 0 3 1.5 3 3v4c0 1.5-1 3-3 3H9c-2 0-3 1.5-3 3v4c0 1.5 1 3 3 3h14" stroke="#18181b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   </div>
 );
 
@@ -45,6 +51,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   const [loginPassword, setLoginPassword] = useState<string>("");
   const [loginError, setLoginError] = useState<string>("");
   const [showGuide, setShowGuide] = useState(false);
+  const guideDialogRef = useDialogFocus<HTMLDivElement>(showGuide, () => setShowGuide(false));
   const [mobileSetupMode, setMobileSetupMode] = useState<"local" | "connect" | null>(null);
   const [pairingAddress, setPairingAddress] = useState("");
   const [pairingCode, setPairingCode] = useState("");
@@ -260,8 +267,8 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
           <button type="button" className="btn btn-primary btn-full-width" onClick={scanDesktopPairingCode}>Scan Desktop QR</button>
           <div className="mobile-pair-divider"><span>or enter manually</span></div>
           <div className="login-form">
-            <div className="form-group"><label className="form-label">Desktop address</label><input className="form-input" value={pairingAddress} onChange={(event) => setPairingAddress(event.target.value)} placeholder="http://192.168.1.20:47631" /></div>
-            <div className="form-group"><label className="form-label">Pairing code</label><input className="form-input" inputMode="numeric" value={pairingCode} onChange={(event) => setPairingCode(event.target.value)} placeholder="000000" /></div>
+            <div className="form-group"><label className="form-label" htmlFor="mobile-desktop-address">Desktop address</label><input id="mobile-desktop-address" className="form-input" value={pairingAddress} onChange={(event) => setPairingAddress(event.target.value)} placeholder="http://192.168.1.20:47631" /></div>
+            <div className="form-group"><label className="form-label" htmlFor="mobile-pairing-code">Pairing code</label><input id="mobile-pairing-code" className="form-input" inputMode="numeric" value={pairingCode} onChange={(event) => setPairingCode(event.target.value)} placeholder="000000" /></div>
             <button type="button" className="btn btn-primary btn-full-width" disabled={pairingLoading} onClick={connectToDesktop}>{pairingLoading ? "Connecting…" : "Connect & Import"}</button>
             <button type="button" className="btn btn-secondary btn-full-width" onClick={() => setMobileSetupMode(null)}>Back</button>
           </div>
@@ -430,18 +437,16 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
         onLogout={handleLogout}
       />
 
+      <AccessibilityBridge />
       <CommandPalette navigate={setActiveTab} />
       <main className="main-content">
-        {children}
-        <footer className="app-footer">
-          Folio - built by <a href="https://incuforge.pages.dev/" target="_blank" rel="noreferrer" className="underline-link">IncuForge</a> @ 2026
-        </footer>
+        <FolioPageTransition pageKey={activeTab}>{children}</FolioPageTransition>
       </main>
 
       <ModalOverlays />
       {showGuide && (
         <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="getting-started-title">
-          <div className="glass-card" style={{ width: "min(620px, calc(100vw - 2rem))", padding: "2rem" }}>
+          <div ref={guideDialogRef} tabIndex={-1} className="glass-card" style={{ width: "min(620px, calc(100vw - 2rem))", padding: "2rem" }}>
             <p className="text-muted-color" style={{ fontSize: "0.7rem" }}>GETTING STARTED</p>
             <h2 id="getting-started-title" style={{ fontSize: "1.8rem", margin: "0.3rem 0 0.8rem" }}>Your Folio workflow</h2>
             <p className="text-muted-color" style={{ lineHeight: 1.7 }}>

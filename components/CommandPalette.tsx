@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Search, Plus, Settings, ClipboardList, Utensils, Users, X, LayoutDashboard, CalendarRange, TrendingUp } from "lucide-react";
+import { useDialogFocus } from "./useDialogFocus";
 
 type SearchResult = { type: "contact" | "item" | "order"; id: string; title: string; subtitle?: string };
 
@@ -10,6 +11,7 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const input = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogFocus<HTMLDivElement>(open, () => setOpen(false), input);
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -41,7 +43,7 @@ export default function CommandPalette({ navigate }: { navigate: (tab: string) =
 
   return (
     <div className="command-palette-backdrop" role="dialog" aria-modal="true" aria-label="Search Folio" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-      <div className="command-palette">
+      <div ref={dialogRef} tabIndex={-1} className="command-palette">
         <div className="command-palette-input"><Search size={18}/><input ref={input} value={query} onChange={(event)=>setQuery(event.target.value)} placeholder="Search clients, events, dishes, venues or phone numbers…" aria-label="Search Folio"/><button onClick={()=>setOpen(false)} aria-label="Close search"><X size={17}/></button></div>
         {query.length < 2 ? <div className="command-list">
           <p className="command-section-label">Quick action</p>

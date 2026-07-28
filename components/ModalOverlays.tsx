@@ -28,6 +28,7 @@ import {
   ChefHat,
   Receipt
 } from "lucide-react";
+import { useDialogFocus } from "./useDialogFocus";
 
 export default function ModalOverlays() {
   const {
@@ -51,20 +52,8 @@ export default function ModalOverlays() {
     paymentMethods,
   } = useAppContext();
 
-
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (selectedOrder) setSelectedOrder(null);
-        if (printMenuOrder) setPrintMenuOrder(null);
-        if (kitchenSheetOrder) setKitchenSheetOrder(null);
-        if (cancellationLockModal) setCancellationLockModal(null);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedOrder, printMenuOrder, kitchenSheetOrder, cancellationLockModal]);
+  const selectedOrderDialogRef = useDialogFocus<HTMLDivElement>(Boolean(selectedOrder), () => setSelectedOrder(null));
+  const cancellationDialogRef = useDialogFocus<HTMLDivElement>(Boolean(cancellationLockModal), () => setCancellationLockModal(null));
 
   React.useEffect(() => {
     if (printMenuOrder) {
@@ -588,11 +577,11 @@ export default function ModalOverlays() {
     <>
       {/* Selected Order Detailed Card Overlay */}
       {selectedOrder && (
-        <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-          <div className="modal-content modal-large" style={{ viewTransitionName: "active-order-modal" } as any} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="order-details-title" onClick={() => setSelectedOrder(null)}>
+          <div ref={selectedOrderDialogRef} tabIndex={-1} className="modal-content modal-large" style={{ viewTransitionName: "active-order-modal" } as any} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
-                <h2 className="modal-title">
+                <h2 id="order-details-title" className="modal-title">
                   {selectedOrder.event_name}
                 </h2>
                 <span className={`status-badge status-${selectedOrder.status}`}>
@@ -602,6 +591,8 @@ export default function ModalOverlays() {
               <button 
                 type="button" 
                 className="btn-close-modal"
+                aria-label="Close order details"
+                data-mobile-back-close
                 onClick={() => setSelectedOrder(null)}
               >
                 <X size={20} />
@@ -1102,12 +1093,12 @@ export default function ModalOverlays() {
 
       {/* Cancellation safety window modal check */}
       {cancellationLockModal && (
-        <div className="modal-overlay" onClick={() => setCancellationLockModal(null)}>
-          <div className="modal-content modal-danger" onClick={(e) => e.stopPropagation()} style={{ borderColor: "var(--color-danger)" }}>
-            <h3 className="modal-danger-title flex-align-center-gap">
+        <div className="modal-overlay" role="alertdialog" aria-modal="true" aria-labelledby="event-preparation-guard-title" aria-describedby="event-preparation-guard-description" onClick={() => setCancellationLockModal(null)}>
+          <div ref={cancellationDialogRef} tabIndex={-1} className="modal-content modal-danger" onClick={(e) => e.stopPropagation()} style={{ borderColor: "var(--color-danger)" }}>
+            <h3 id="event-preparation-guard-title" className="modal-danger-title flex-align-center-gap">
               <AlertTriangle size={20} /> Event Preparation Guard
             </h3>
-            <p className="modal-danger-desc">
+            <p id="event-preparation-guard-description" className="modal-danger-desc">
               {cancellationLockModal.message}
             </p>
             <div className="modal-footer-actions">
