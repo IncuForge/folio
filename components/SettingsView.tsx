@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "@/lib/AppContext";
 import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen, RefreshCw, Download } from "lucide-react";
 import { saveResponseToFile } from "@/lib/save-file";
@@ -9,6 +9,18 @@ type PairedSyncDevice = { id: string; name: string; pairedAt: number; lastSeenAt
 type LiveSyncStatus = { phase: string; revision: number; pending: boolean; lastSyncedAt?: string; message?: string; conflicts?: number };
 
 export default function SettingsView() {
+  const confirmationResolver = useRef<((value: boolean) => void) | null>(null);
+  const [confirmation, setConfirmation] = useState<{ title: string; message: string } | null>(null);
+  const requestConfirmation = (message: string, title = "Confirm action") => new Promise<boolean>((resolve) => {
+    confirmationResolver.current = resolve;
+    setConfirmation({ title, message });
+  });
+  const closeConfirmation = (accepted: boolean) => {
+    confirmationResolver.current?.(accepted);
+    confirmationResolver.current = null;
+    setConfirmation(null);
+  };
+  const [activeSettingsSection, setActiveSettingsSection] = useState<"backup" | "branding" | "team" | "devices" | "about" | "danger">("backup");
   const { 
     currentUser, 
     pdfBrandName, 
@@ -153,7 +165,7 @@ export default function SettingsView() {
   };
 
   const handleDeleteUser = async (id: string, email: string) => {
-    if (!confirm(`Are you sure you want to delete user "${email}"?`)) return;
+    if (!(await requestConfirmation(`Delete user "${email}"? This account will immediately lose access.`, "Delete team account"))) return;
     setErrorMsg("");
     setSuccessMsg("");
 
@@ -293,7 +305,7 @@ export default function SettingsView() {
   const handleRestore = async () => {
     const backup = await readRestoreFile();
     if (!backup || !restorePreview) return;
-    if (!confirm("Restore this backup? All current Folio data will be replaced. A safety backup will download first.")) return;
+    if (!(await requestConfirmation("All current Folio data will be replaced. A safety backup will download first.", "Restore this backup?"))) return;
     setRestoreLoading(true);
     setErrorMsg("");
     try {
@@ -388,7 +400,7 @@ export default function SettingsView() {
   }, []);
 
   const revokeSyncDevice = async (deviceId: string) => {
-    if (!window.confirm("Revoke this device? It will stop syncing immediately and must be paired again.")) return;
+    if (!(await requestConfirmation("This device will stop syncing immediately and must be paired again.", "Revoke paired device?"))) return;
     try {
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("sync_revoke_device", { deviceId });
@@ -399,7 +411,7 @@ export default function SettingsView() {
   };
   const resolveConflicts = async (choice: "local" | "remote") => {
     const description = choice === "local" ? "this device's versions" : "the hub versions";
-    if (!window.confirm(`Resolve all current conflicts using ${description}? A recovery backup should be created first.`)) return;
+    if (!(await requestConfirmation(`Use ${description} for every current conflict? Create a recovery backup first.`, "Resolve synchronization conflicts?"))) return;
     try {
       const { resolveSyncConflicts } = await import("@/desktop/src/sync-coordinator");
       await resolveSyncConflicts(choice);
@@ -442,7 +454,7 @@ export default function SettingsView() {
     window.location.reload();
   };
   return (
-    <div className="settings-container">
+    <div className="settings-container" data-active-section={activeSettingsSection}>
       <header>
         <h1 className="settings-title">
           System Settings &amp; Backups
@@ -452,13 +464,32 @@ export default function SettingsView() {
         </p>
       </header>
 
+      <nav className="settings-section-nav" aria-label="Settings sections">
+        {([
+          ["backup", "Backup & Data"],
+          ["branding", "Branding & Receipt"],
+          ["team", "Team & Security"],
+          ["devices", "Devices & Sync"],
+          ["about", "About & Updates"],
+          ["danger", "Danger Zone"],
+        ] as const).filter(([id]) => {
+          if (id === "devices" || id === "danger") return isDesktopRuntime && isAdmin;
+          if (id === "about") return isDesktopRuntime;
+          return true;
+        }).map(([id, label]) => (
+          <button key={id} type="button" className={activeSettingsSection === id ? "active" : ""} aria-current={activeSettingsSection === id ? "page" : undefined} onClick={() => setActiveSettingsSection(id)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+
       {errorMsg && (
-        <div className="p-3 bg-[var(--danger-bg)] text-[var(--danger-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-red-200 dark:border-red-900/40" style={{ marginBottom: "1.5rem" }}>
+        <div role="alert" className="p-3 bg-[var(--danger-bg)] text-[var(--danger-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-red-200 dark:border-red-900/40" style={{ marginBottom: "1.5rem" }}>
           ⚠️ {errorMsg}
         </div>
       )}
       {successMsg && (
-        <div className="p-3 bg-[var(--success-bg)] text-[var(--success-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-emerald-250" style={{ marginBottom: "1.5rem" }}>
+        <div role="status" aria-live="polite" className="p-3 bg-[var(--success-bg)] text-[var(--success-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-emerald-250" style={{ marginBottom: "1.5rem" }}>
           ✅ {successMsg}
         </div>
       )}
@@ -466,7 +497,7 @@ export default function SettingsView() {
       <div className="settings-grid">
         {/* Backups Panel - Admins Only */}
         {isAdmin ? (
-          <div className="glass-card settings-panel settings-panel-backup">
+          <div className="glass-card settings-panel settings-panel-backup" data-settings-section="backup">
             <h3 className="panel-title">
               Database Backups
             </h3>
@@ -544,7 +575,7 @@ export default function SettingsView() {
             </section>
           </div>
         ) : (
-          <div className="glass-card settings-panel settings-panel-disabled">
+          <div className="glass-card settings-panel settings-panel-disabled" data-settings-section="backup">
             <Database size={32} className="text-muted-color" />
             <h3 className="panel-title-locked">
               Database Access Locked
@@ -556,7 +587,7 @@ export default function SettingsView() {
         )}
 
         {/* Data Export Excel Panel */}
-        <div className="glass-card settings-panel settings-panel-export">
+        <div className="glass-card settings-panel settings-panel-export" data-settings-section="backup">
           <h3 className="panel-title">
             Spreadsheet Exports
           </h3>
@@ -574,7 +605,7 @@ export default function SettingsView() {
         </div>
 
         {/* PDF Presentation Settings Panel */}
-        <div className="glass-card settings-panel settings-panel-branding">
+        <div className="glass-card settings-panel settings-panel-branding" data-settings-section="branding">
           <h3 className="panel-title">
             Event Receipt &amp; PDF Settings
           </h3>
@@ -690,12 +721,14 @@ export default function SettingsView() {
                   }}
                 >
                   {pm}
-                  <span
-                    style={{ cursor: "pointer", fontWeight: "bold", marginLeft: "0.25rem", color: "var(--ink-muted)" }}
+                  <button
+                    type="button"
+                    className="payment-method-remove"
+                    aria-label={`Remove ${pm} payment method`}
                     onClick={() => setPaymentMethods(paymentMethods.filter((x) => x !== pm))}
                   >
                     &times;
-                  </span>
+                  </button>
                 </span>
               ))}
             </div>
@@ -735,7 +768,7 @@ export default function SettingsView() {
       </div>
 
       {isDesktopRuntime && (
-        <div className="glass-card settings-update-panel">
+        <div className="glass-card settings-update-panel" data-settings-section="about">
           <div className="settings-update-copy">
             <span className="settings-update-icon"><RefreshCw size={18} /></span>
             <div>
@@ -758,7 +791,7 @@ export default function SettingsView() {
       )}
 
       {isDesktopRuntime && isAdmin && (
-        <div className="glass-card settings-update-panel settings-danger-panel">
+        <div className="glass-card settings-update-panel settings-danger-panel" data-settings-section="danger">
           <div className="settings-update-copy">
             <span className="settings-update-icon"><Trash2 size={18} /></span>
             <div>
@@ -770,7 +803,7 @@ export default function SettingsView() {
         </div>
       )}
       {isDesktopRuntime && isAdmin && (
-        <div className="glass-card sync-pairing-panel">
+        <div className="glass-card sync-pairing-panel" data-settings-section="devices">
           <div className="sync-pairing-copy">
             <span className="settings-update-icon"><RefreshCw size={18} /></span>
             <div>
@@ -816,7 +849,7 @@ export default function SettingsView() {
       )}
       {/* User Management Section - Visible to Admins Only */}
       {isAdmin && (
-        <div className="glass-card users-panel">
+        <div className="glass-card users-panel" data-settings-section="team">
           <h3 className="users-panel-title">
             <Users size={20} /> User Accounts &amp; Team Roles
           </h3>
@@ -980,7 +1013,7 @@ export default function SettingsView() {
         </div>
       )}
 
-      <div className="settings-support-grid">
+      <div className="settings-support-grid" data-settings-section="team">
         {/* Change Own Password — visible to ALL users */}
         <div className="glass-card settings-support-card settings-password-card">
           <h3 className="users-panel-title">
@@ -1024,6 +1057,19 @@ export default function SettingsView() {
           }}>Show Guide Again</button>
         </div>
       </div>
+
+      {confirmation && (
+        <div className="folio-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeConfirmation(false); }}>
+          <div className="folio-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="settings-confirm-title" aria-describedby="settings-confirm-message">
+            <h2 id="settings-confirm-title">{confirmation.title}</h2>
+            <p id="settings-confirm-message">{confirmation.message}</p>
+            <div className="folio-confirm-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => closeConfirmation(false)}>Cancel</button>
+              <button type="button" className="btn btn-danger" autoFocus onClick={() => closeConfirmation(true)}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

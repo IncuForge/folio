@@ -10,7 +10,7 @@ import {
   calculatePendingOrderCost,
   calculateTotalOrderCost
 } from "@/lib/date-utils";
-import { Plus, AlertTriangle, Calendar, Users, IndianRupee, Clock, Coins } from "lucide-react";
+import { Plus, AlertTriangle, Calendar, Users, IndianRupee, Clock } from "lucide-react";
 
 export default function DashboardView() {
   const {
@@ -118,7 +118,8 @@ export default function DashboardView() {
           </h3>
           <div className="warning-items-list">
             {overdueOrders.map((order) => (
-              <div 
+              <button
+                type="button"
                 key={order.id} 
                 id={"warning-row-" + order.id}
                 className="warning-row overdue-row"
@@ -134,11 +135,12 @@ export default function DashboardView() {
                 <span className="payment-badge overdue-badge">
                   PAYMENT OVERDUE
                 </span>
-              </div>
+              </button>
             ))}
 
             {urgentOrders.map((order) => (
-              <div 
+              <button
+                type="button"
                 key={order.id} 
                 id={"warning-row-" + order.id}
                 className="warning-row urgent-row"
@@ -154,7 +156,7 @@ export default function DashboardView() {
                 <span className="payment-badge urgent-badge">
                   URGENT COLLECTION
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -220,6 +222,15 @@ export default function DashboardView() {
                     id={"order-row-" + order.id}
                     className="table-body-row"
                     onClick={() => setSelectedOrder(order)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open ${order.event_name} for ${order.client_name}`}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedOrder(order);
+                      }
+                    }}
                   >
                     <td className="td-cell">
                       <div className="date-time-col">

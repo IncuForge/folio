@@ -70,6 +70,8 @@ export default function Sidebar({
   ];
  
   const mainNavItems = navItems.filter((item) => item.id !== "settings");
+  const mobilePrimaryIds = new Set(["dashboard", "orders", "calendar", "library"]);
+  const mobilePrimaryItems = navItems.filter((item) => mobilePrimaryIds.has(item.id));
   const settingsItem = navItems.find((item) => item.id === "settings");
  
   return (
@@ -116,7 +118,16 @@ export default function Sidebar({
           </div>
         )}
  
-        <div className="drawer-menu-items" style={{ display: "flex", flexDirection: "column", gap: "1rem", flex: 1 }}>
+        <div className="drawer-menu-items" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+          {navItems.filter((item) => ["contacts", "reports"].includes(item.id)).map((item) => {
+            const Icon = item.icon;
+            return (
+              <button key={item.id} type="button" onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }} className={`sidebar-item-btn ${activeTab === item.id ? "active" : ""}`}>
+                <Icon size={20} className="sidebar-item-icon" />
+                <span className="sidebar-item-label">{item.label}</span>
+              </button>
+            );
+          })}
           <button
             onClick={() => {
               setActiveTab("settings");
@@ -147,8 +158,8 @@ export default function Sidebar({
       </div>
 
       {/* Mobile Bottom Navigation Bar - Visible only on screens < 1024px */}
-      <nav className="mobile-bottom-nav">
-        {navItems.filter(item => item.id !== "settings").map((item) => {
+      <nav className="mobile-bottom-nav" aria-label="Primary navigation">
+        {mobilePrimaryItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id || (item.id === "orders" && activeTab === "order-form");
           return (
@@ -156,14 +167,19 @@ export default function Sidebar({
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`mobile-nav-link ${isActive ? "active" : ""}`}
+              aria-current={isActive ? "page" : undefined}
             >
               <div className={`mobile-icon-box ${isActive ? "active" : ""}`}>
                 <Icon size={18} />
               </div>
-              <span className="mobile-nav-label">{item.label}</span>
+              <span className="mobile-nav-label">{item.id === "orders" ? "Orders" : item.id === "library" ? "Kitchen" : item.label}</span>
             </button>
           );
         })}
+        <button type="button" onClick={() => setIsMobileMenuOpen(true)} className={`mobile-nav-link ${["contacts", "reports", "settings"].includes(activeTab) ? "active" : ""}`} aria-label="More navigation options" aria-expanded={isMobileMenuOpen}>
+          <div className={`mobile-icon-box ${["contacts", "reports", "settings"].includes(activeTab) ? "active" : ""}`}><Menu size={18} /></div>
+          <span className="mobile-nav-label">More</span>
+        </button>
       </nav>
 
       {/* Desktop Navigation Sidebar - Hidden on mobile screens */}
