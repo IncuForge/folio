@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { users, settings } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
+import { getCurrencySymbol, resolveCurrencyCode } from "@/lib/currencies";
 
 const LEGACY_SEEDED_USERS = new Set(["admin1@cater.com", "admin2@cater.com"]);
 
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
     const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
     const businessName = typeof body.businessName === "string" ? body.businessName.trim() : "";
-    const currencySymbol = typeof body.currencySymbol === "string" ? body.currencySymbol.trim() : "₹";
+    const currencyCode = resolveCurrencyCode(typeof body.currencyCode === "string" ? body.currencyCode : body.currencySymbol);
+    const currencySymbol = getCurrencySymbol(currencyCode);
 
     if (!/^[a-z0-9._-]{3,40}$/.test(username)) {
       return NextResponse.json(
@@ -59,7 +61,8 @@ export async function POST(request: Request) {
     }
 
     await settings.set("pdfBrandName", businessName);
-    await settings.set("currencySymbol", currencySymbol || "₹");
+    await settings.set("currencyCode", currencyCode);
+    await settings.set("currencySymbol", currencySymbol);
     await settings.set("onboardingVersion", "1");
     await settings.set("autoBackupEnabled", "true");
     await settings.set("autoBackupFrequency", "daily");

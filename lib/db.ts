@@ -172,6 +172,7 @@ export function initDb() {
     db.prepare(`
       INSERT INTO settings (key, value) VALUES
       ('pdfBrandName', 'Cater Flow Premium Catering'),
+      ('currencyCode', 'INR'),
       ('currencySymbol', '₹'),
       ('paymentMethods', '["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]')
     `).run();

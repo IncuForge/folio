@@ -605,7 +605,7 @@ export default function OrderFormView() {
               {discountPercent > 0 && (
                 <div className="totals-row" style={{ color: "var(--color-success, #2e7d32)", fontWeight: "500" }}>
                   <span>Discount ({discountPercent}%):</span>
-                  <span className="totals-value">-{currencySymbol}{discountAmount.toLocaleString("en-IN")}</span>
+                  <span className="totals-value">-{currencySymbol}{discountAmount.toLocaleString()}</span>
                 </div>
               )}
               <div className="totals-row">

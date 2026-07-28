@@ -153,7 +153,8 @@ CREATE TABLE IF NOT EXISTS settings (
 
 INSERT INTO settings (key, value) VALUES
 ('pdfBrandName', 'Cater Flow Premium Catering'),
-('currencySymbol', '₹'),
+('currencyCode', 'INR'),
+      ('currencySymbol', '₹'),
 ('paymentMethods', '["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]'),
 ('onboardingVersion', '0'),
 ('autoBackupEnabled', 'true'),

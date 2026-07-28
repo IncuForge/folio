@@ -1,6 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import { BaseDirectory, mkdir, readDir, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import { runMigrations } from "./migrations";
+import { getCurrencySymbol, resolveCurrencyCode } from "@/lib/currencies";
 import { BACKUP_TABLES, FOLIO_BACKUP_FORMAT, FOLIO_BACKUP_VERSION, validateBackup, type FolioBackup } from "@/lib/backup";
 
 type Row = Record<string, any>;
@@ -348,7 +349,8 @@ async function handleApi(path: string, method: string, init?: RequestInit): Prom
     if (!/^[a-z0-9._-]{3,40}$/.test(username)) return json({ error: "Enter a valid username." }, 400);
     if (password.length < 8) return json({ error: "Password must be at least 8 characters." }, 400);
     await database.execute("INSERT INTO users (id,email,password,role) VALUES ($1,$2,$3,'admin')", [crypto.randomUUID(), username, await sha256(password)]);
-    await setSettings({ pdfBrandName: payload.businessName, currencySymbol: payload.currencySymbol || "₹", onboardingVersion: 1, autoBackupEnabled: true, autoBackupFrequency: "daily", autoBackupRetention: 14 });
+    const currencyCode = resolveCurrencyCode(payload.currencyCode || payload.currencySymbol);
+    await setSettings({ pdfBrandName: payload.businessName, currencyCode, currencySymbol: getCurrencySymbol(currencyCode), onboardingVersion: 1, autoBackupEnabled: true, autoBackupFrequency: "daily", autoBackupRetention: 14 });
     return json({ ok: true, username }, 201);
   }
   if (route === "/api/auth/login" && method === "POST") {

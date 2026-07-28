@@ -26,7 +26,7 @@ export default function DesktopTitleBar() {
       {isWindows && (
         <div className="desktop-window-controls">
           <button type="button" aria-label="Minimize" onClick={() => appWindow.minimize()}><Minus size={14} /></button>
-          <button type="button" aria-label="Maximize or restore" onClick={() => appWindow.toggleMaximize()}><Square size={12} /></button>
+          <button type="button" data-window-control="maximize" aria-label="Maximize or restore" onClick={() => appWindow.toggleMaximize()}><Square size={12} /></button>
           <button type="button" className="desktop-window-close" aria-label="Close" onClick={() => appWindow.close()}><X size={15} /></button>
         </div>
       )}

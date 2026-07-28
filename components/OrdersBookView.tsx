@@ -231,9 +231,9 @@ export default function OrdersBookView() {
             {/* Financial summary & Actions */}
             <div className="order-card-footer">
               <div className="financial-summary-text">
-                Billed Total: <strong>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString("en-IN")}</strong>
+                Billed Total: <strong>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString()}</strong>
                 <span className="separator-line"> | </span>
-                Pending Balance: <strong className="pending-balance-value">{currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString("en-IN")}</strong>
+                Pending Balance: <strong className="pending-balance-value">{currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString()}</strong>
               </div>
               <div className="actions-wrapper">
                 {order.status === "completed" ? (

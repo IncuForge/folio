@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "@/lib/AppContext";
 import { Database, FileJson, FileSpreadsheet, UserPlus, Trash2, Users, KeyRound, Lock, Upload, ShieldCheck, Clock, BookOpen, RefreshCw, Download } from "lucide-react";
 import { saveResponseToFile } from "@/lib/save-file";
+import { getCurrencyOptions } from "@/lib/currencies";
 
 type PairedSyncDevice = { id: string; name: string; pairedAt: number; lastSeenAt: number };
 type LiveSyncStatus = { phase: string; revision: number; pending: boolean; lastSyncedAt?: string; message?: string; conflicts?: number };
@@ -27,12 +28,14 @@ export default function SettingsView() {
     setPdfBrandName, 
     pdfBrandLogo,
     setPdfBrandLogo,
-    currencySymbol, 
+    currencySymbol,
+    currencyCode,
     setCurrencySymbol,
     paymentMethods,
     setPaymentMethods
   } = useAppContext();
   
+  const currencyOptions = React.useMemo(() => getCurrencyOptions(), []);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -657,15 +660,11 @@ export default function SettingsView() {
             </div>
           </div>
           <div className="form-group" style={{ width: "100%", marginTop: "1rem" }}>
-            <label className="form-label" style={{ fontSize: "0.75rem" }}>System Currency Symbol</label>
-            <input
-              type="text"
-              className="form-input"
-              style={{ fontSize: "0.8rem", width: "100%" }}
-              placeholder="e.g. ₹"
-              value={currencySymbol}
-              onChange={(e) => setCurrencySymbol(e.target.value)}
-            />
+            <label className="form-label" style={{ fontSize: "0.75rem" }}>Business Currency</label>
+            <select className="form-input" value={currencyCode} onChange={(e) => setCurrencySymbol(e.target.value)}>
+              {currencyOptions.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}
+            </select>
+            <small>Uses ISO 4217 codes so currencies with similar symbols remain unambiguous.</small>
           </div>
 
           <div className="form-group" style={{ width: "100%", marginTop: "1.5rem" }}>

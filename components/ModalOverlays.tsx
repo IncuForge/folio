@@ -228,7 +228,7 @@ export default function ModalOverlays() {
     const brand = pdfBrandName || "Cater Flow Premium Catering";
     
     const getBillPaymentText = (paid: boolean, amount: number, notesString: string, settled = false) => {
-      const formattedAmount = Number(amount || 0).toLocaleString("en-IN");
+      const formattedAmount = Number(amount || 0).toLocaleString();
       if (!paid) return settled ? "Not required — invoice settled" : `${currencySymbol}${formattedAmount} Pending`;
       const details = parsePaymentNotes(notesString);
       if (details.isStructured) {
@@ -337,8 +337,8 @@ export default function ModalOverlays() {
                                         <strong>Catering Package Set:</strong> {sessPkg?.name || "Standard Bundle"}
                                       </td>
                                       <td className="text-center">{session.guest_count}</td>
-                                      <td className="text-right">{currencySymbol}{Number(session.package_price || 0).toLocaleString("en-IN")}</td>
-                                      <td className="text-right">{currencySymbol}{((Number(session.package_price) || 0) * (session.guest_count || 0)).toLocaleString("en-IN")}</td>
+                                      <td className="text-right">{currencySymbol}{Number(session.package_price || 0).toLocaleString()}</td>
+                                      <td className="text-right">{currencySymbol}{((Number(session.package_price) || 0) * (session.guest_count || 0)).toLocaleString()}</td>
                                     </tr>
                                     {pkgDishes.length > 0 && (
                                       <tr className="bill-table-package-items-summary-row">
@@ -365,8 +365,8 @@ export default function ModalOverlays() {
                                         {it.notes && <div className="bill-item-notes-text">Note: {it.notes}</div>}
                                       </td>
                                       <td className="text-center">{it.quantity}</td>
-                                      <td className="text-right">{currencySymbol}{price.toLocaleString("en-IN")}</td>
-                                      <td className="text-right">{currencySymbol}{(price * it.quantity).toLocaleString("en-IN")}</td>
+                                      <td className="text-right">{currencySymbol}{price.toLocaleString()}</td>
+                                      <td className="text-right">{currencySymbol}{(price * it.quantity).toLocaleString()}</td>
                                     </tr>
                                   );
                                 })}
@@ -383,8 +383,8 @@ export default function ModalOverlays() {
                                     <strong>Catering Package Set:</strong> {selectedPkg?.name || "Standard Bundle"}
                                   </td>
                                   <td className="text-center">{order.guest_count}</td>
-                                  <td className="text-right">{currencySymbol}{Number(order.package_price || 0).toLocaleString("en-IN")}</td>
-                                  <td className="text-right">{currencySymbol}{((Number(order.package_price) || 0) * (order.guest_count || 0)).toLocaleString("en-IN")}</td>
+                                  <td className="text-right">{currencySymbol}{Number(order.package_price || 0).toLocaleString()}</td>
+                                  <td className="text-right">{currencySymbol}{((Number(order.package_price) || 0) * (order.guest_count || 0)).toLocaleString()}</td>
                                 </tr>
                                 {order.items && order.items.length > 0 && (
                                   <tr className="bill-table-package-items-summary-row">
@@ -405,8 +405,8 @@ export default function ModalOverlays() {
                               <tr key={idx} className="bill-additional-charge-row">
                                 <td><strong>Service / Fee:</strong> {c.label}</td>
                                 <td className="text-center">1</td>
-                                <td className="text-right">{currencySymbol}{Number(c.amount || 0).toLocaleString("en-IN")}</td>
-                                <td className="text-right">{currencySymbol}{Number(c.amount || 0).toLocaleString("en-IN")}</td>
+                                <td className="text-right">{currencySymbol}{Number(c.amount || 0).toLocaleString()}</td>
+                                <td className="text-right">{currencySymbol}{Number(c.amount || 0).toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -440,31 +440,31 @@ export default function ModalOverlays() {
                       <div className="bill-totals-column">
                         <div className="bill-total-row">
                           <span>Base Menu Subtotal:</span>
-                          <span>{currencySymbol}{calculateBaseMenuCostOnly(order, packages).toLocaleString("en-IN")}</span>
+                          <span>{currencySymbol}{calculateBaseMenuCostOnly(order, packages).toLocaleString()}</span>
                         </div>
                         {Number(order.discount_percent || 0) > 0 && (
                           <div className="bill-total-row" style={{ color: "#2e7d32" }}>
                             <span>Discount ({order.discount_percent}%):</span>
-                            <span>-{currencySymbol}{(calculateBaseMenuCostOnly(order, packages) * (Number(order.discount_percent) / 100)).toLocaleString("en-IN")}</span>
+                            <span>-{currencySymbol}{(calculateBaseMenuCostOnly(order, packages) * (Number(order.discount_percent) / 100)).toLocaleString()}</span>
                           </div>
                         )}
                         {Array.isArray(order.additional_charges) && order.additional_charges.length > 0 && (
                           <div className="bill-total-row">
                             <span>Additional Charges:</span>
-                            <span>{currencySymbol}{order.additional_charges.reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0).toLocaleString("en-IN")}</span>
+                            <span>{currencySymbol}{order.additional_charges.reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0).toLocaleString()}</span>
                           </div>
                         )}
                         <div className="bill-total-row bill-final-total" style={{ borderTop: "1px solid #1a1a1a", borderBottom: "2px double #1a1a1a", padding: "0.25rem 0", fontWeight: "bold" }}>
                           <span>Estimated Total:</span>
-                          <span>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString("en-IN")}</span>
+                          <span>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString()}</span>
                         </div>
                         <div className="bill-total-row">
                           <span>Total Paid to Date:</span>
-                          <span>{currencySymbol}{paidAmount.toLocaleString("en-IN")}</span>
+                          <span>{currencySymbol}{paidAmount.toLocaleString()}</span>
                         </div>
                         <div className="bill-total-row bill-final-balance">
                           <span>Outstanding Balance:</span>
-                          <strong>{currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString("en-IN")}</strong>
+                          <strong>{currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString()}</strong>
                         </div>
                       </div>
                     </div>
@@ -1016,27 +1016,27 @@ export default function ModalOverlays() {
                 <div className="billing-summary-details" style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-ink)", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--ink-muted)" }}>
                     <span>Base Menu Subtotal:</span>
-                    <span>{currencySymbol}{calculateBaseMenuCostOnly(selectedOrder, packages).toLocaleString("en-IN")}</span>
+                    <span>{currencySymbol}{calculateBaseMenuCostOnly(selectedOrder, packages).toLocaleString()}</span>
                   </div>
                   {Number(selectedOrder.discount_percent || 0) > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--color-success, #2e7d32)" }}>
                       <span>Discount ({selectedOrder.discount_percent}%):</span>
-                      <span>-{currencySymbol}{(calculateBaseMenuCostOnly(selectedOrder, packages) * (Number(selectedOrder.discount_percent) / 100)).toLocaleString("en-IN")}</span>
+                      <span>-{currencySymbol}{(calculateBaseMenuCostOnly(selectedOrder, packages) * (Number(selectedOrder.discount_percent) / 100)).toLocaleString()}</span>
                     </div>
                   )}
                   {selectedOrder.additional_charges && selectedOrder.additional_charges.length > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--ink-muted)" }}>
                       <span>Additional Charges:</span>
-                      <span>{currencySymbol}{selectedOrder.additional_charges.reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0).toLocaleString("en-IN")}</span>
+                      <span>{currencySymbol}{selectedOrder.additional_charges.reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="billing-summary-row border-top" style={{ paddingTop: "0.4rem", fontWeight: "bold", fontSize: "0.95rem" }}>
                     <span>Billed Total:</span>
-                    <span>{currencySymbol}{calculateTotalOrderCost(selectedOrder, packages).toLocaleString("en-IN")}</span>
+                    <span>{currencySymbol}{calculateTotalOrderCost(selectedOrder, packages).toLocaleString()}</span>
                   </div>
                   <div className="billing-summary-row pending-balance-row">
                     <span>Pending Balance:</span>
-                    <span>{currencySymbol}{calculatePendingOrderCost(selectedOrder, packages).toLocaleString("en-IN")}</span>
+                    <span>{currencySymbol}{calculatePendingOrderCost(selectedOrder, packages).toLocaleString()}</span>
                   </div>
                 </div>
               </div>

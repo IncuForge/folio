@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { getCurrencyOptions } from "@/lib/currencies";
 import Sidebar from "@/components/Sidebar";
 import ModalOverlays from "@/components/ModalOverlays";
 import CommandPalette from "@/components/CommandPalette";
@@ -36,7 +37,8 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
   const [setupUsername, setSetupUsername] = useState("admin");
   const [setupPassword, setSetupPassword] = useState("");
   const [setupPasswordConfirm, setSetupPasswordConfirm] = useState("");
-  const [setupCurrency, setSetupCurrency] = useState("₹");
+  const [setupCurrency, setSetupCurrency] = useState("INR");
+  const currencyOptions = useMemo(() => getCurrencyOptions(), []);
   const [setupError, setSetupError] = useState("");
   const [setupSaving, setSetupSaving] = useState(false);
   const [loginEmail, setLoginEmail] = useState<string>("");
@@ -161,6 +163,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
           businessName: setupBusinessName,
           username: setupUsername,
           password: setupPassword,
+          currencyCode: setupCurrency,
           currencySymbol: setupCurrency,
         }),
       });
@@ -332,10 +335,7 @@ export default function ClientAppLayout({ children }: { children: React.ReactNod
             <div className="form-group">
               <label className="form-label">Currency</label>
               <select className="form-input" value={setupCurrency} onChange={(e) => setSetupCurrency(e.target.value)}>
-                <option value="₹">₹ Indian Rupee</option>
-                <option value="$">$ US Dollar</option>
-                <option value="€">€ Euro</option>
-                <option value="£">£ Pound Sterling</option>
+                {currencyOptions.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}
               </select>
             </div>
             <button className="btn btn-primary btn-full-width" disabled={setupSaving}>

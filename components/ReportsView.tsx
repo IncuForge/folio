@@ -165,7 +165,7 @@ export default function ReportsView() {
             Total Sales (Booked)
           </span>
           <h2 className="stat-box-value text-primary-color">
-            {currencySymbol}{reportData.totalBooked.toLocaleString("en-IN")}
+            {currencySymbol}{reportData.totalBooked.toLocaleString()}
           </h2>
           <div className="stat-box-desc">
             Billed total value (excluding cancellations)
@@ -177,7 +177,7 @@ export default function ReportsView() {
             Revenue Collected
           </span>
           <h2 className="stat-box-value text-success-color">
-            {currencySymbol}{reportData.totalCollected.toLocaleString("en-IN")}
+            {currencySymbol}{reportData.totalCollected.toLocaleString()}
           </h2>
           <div className="stat-box-desc">
             Total UPI &amp; Cash payments marked
@@ -189,7 +189,7 @@ export default function ReportsView() {
             Pending Receivables
           </span>
           <h2 className="stat-box-value text-warning-color">
-            {currencySymbol}{reportData.outstanding.toLocaleString("en-IN")}
+            {currencySymbol}{reportData.outstanding.toLocaleString()}
           </h2>
           <div className="stat-box-desc">
             Outstanding milestone balances due

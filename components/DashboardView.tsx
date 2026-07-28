@@ -129,7 +129,7 @@ export default function DashboardView() {
                   <strong className="warning-client-name">{order.client_name}</strong>
                   <span className="warning-event-details">&bull; {order.event_name}</span>
                   <div className="warning-timeline">
-                    Event Date: {order.event_date} (Passed) | Balance: {currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString("en-IN")}
+                    Event Date: {order.event_date} (Passed) | Balance: {currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString()}
                   </div>
                 </div>
                 <span className="payment-badge overdue-badge">
@@ -150,7 +150,7 @@ export default function DashboardView() {
                   <strong className="warning-client-name">{order.client_name}</strong>
                   <span className="warning-event-details">&bull; {order.event_name}</span>
                   <div className="warning-timeline">
-                    Event Date: {order.event_date} (Upcoming) | Balance: {currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString("en-IN")}
+                    Event Date: {order.event_date} (Upcoming) | Balance: {currencySymbol}{calculatePendingOrderCost(order, packages).toLocaleString()}
                   </div>
                 </div>
                 <span className="payment-badge urgent-badge">
@@ -254,7 +254,7 @@ export default function DashboardView() {
                       </div>
                     </td>
                     <td className="td-cell text-right">
-                      <strong>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString("en-IN")}</strong>
+                      <strong>{currencySymbol}{calculateTotalOrderCost(order, packages).toLocaleString()}</strong>
                     </td>
                     <td className="td-cell">
                       <span className={`payment-timeline-badge ${getOrderPaymentStatusClass(order, packages)}`}>

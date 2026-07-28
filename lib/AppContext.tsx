@@ -1,5 +1,6 @@
 "use client";
 
+import { getCurrencySymbol, getDefaultPaymentMethods, resolveCurrencyCode } from "@/lib/currencies";
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Item, Package, Order, AdditionalCharge } from "@/types/schema";
@@ -36,6 +37,7 @@ interface AppContextType {
   pdfBrandLogo: string;
   setPdfBrandLogo: (logo: string) => void;
   currencySymbol: string;
+  currencyCode: string;
   setCurrencySymbol: (val: string) => void;
   paymentMethods: string[];
   setPaymentMethods: (methods: string[]) => void;
@@ -227,6 +229,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [pdfBrandName, setPdfBrandName] = useState<string>("Cater Flow Premium Catering");
   const [pdfBrandLogo, setPdfBrandLogo] = useState<string>("");
   const [currencySymbol, setCurrencySymbolState] = useState<string>("₹");
+  const [currencyCode, setCurrencyCode] = useState<string>("INR");
   const [paymentMethods, setPaymentMethodsState] = useState<string[]>(["UPI", "Cash", "Card", "Bank Transfer", "Cheque"]);
 
   const setPaymentMethods = async (methods: string[]) => {
@@ -243,26 +246,21 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   };
 
   const setCurrencySymbol = async (val: string) => {
-    setCurrencySymbolState(val);
-    
-    let defaults = ["Bank Transfer", "Cash", "Card", "Cheque", "Other"];
-    if (val === "₹") {
-      defaults = ["UPI", "Cash", "Card", "Bank Transfer", "Cheque"];
-    } else if (val === "$") {
-      defaults = ["Zelle", "Venmo", "Cash", "Card", "PayPal", "Cheque"];
-    } else if (val === "€" || val === "£") {
-      defaults = ["Bank Transfer", "Cash", "Card", "PayPal", "Cheque"];
-    }
+    const code = resolveCurrencyCode(val, currencyCode);
+    const symbol = getCurrencySymbol(code);
+    setCurrencyCode(code);
+    setCurrencySymbolState(symbol);
+    const defaults = getDefaultPaymentMethods(code);
     setPaymentMethodsState(defaults);
 
     try {
       await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currencySymbol: val, paymentMethods: defaults })
+        body: JSON.stringify({ currencyCode: code, currencySymbol: symbol, paymentMethods: defaults })
       });
     } catch (e) {
-      console.error("Error saving currency symbol", e);
+      console.error("Error saving currency", e);
     }
   };
   const [kitchenSheetOrder, setKitchenSheetOrder] = useState<Order | null>(null);
@@ -335,7 +333,9 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         const data = await res.json();
         if (data.pdfBrandName !== undefined) setPdfBrandName(data.pdfBrandName);
         if (data.pdfBrandLogo !== undefined) setPdfBrandLogo(data.pdfBrandLogo);
-        if (data.currencySymbol !== undefined) setCurrencySymbolState(data.currencySymbol);
+        const loadedCurrencyCode = resolveCurrencyCode(data.currencyCode || data.currencySymbol);
+        setCurrencyCode(loadedCurrencyCode);
+        setCurrencySymbolState(getCurrencySymbol(loadedCurrencyCode));
         if (data.paymentMethods !== undefined) {
           try {
             const parsed = typeof data.paymentMethods === "string" ? JSON.parse(data.paymentMethods) : data.paymentMethods;
@@ -813,6 +813,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     pdfBrandLogo,
     setPdfBrandLogo,
     currencySymbol,
+    currencyCode,
     setCurrencySymbol,
     paymentMethods,
     setPaymentMethods,
@@ -872,6 +873,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     pdfBrandName,
     pdfBrandLogo,
     currencySymbol,
+    currencyCode,
     paymentMethods,
     kitchenSheetOrder,
     itemForm,

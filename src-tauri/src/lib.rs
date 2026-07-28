@@ -1,6 +1,9 @@
 #[cfg(desktop)]
 mod sync_server;
 
+#[cfg(target_os = "windows")]
+mod windows_snap;
+
 #[cfg(desktop)]
 use tauri::Manager;
 
@@ -40,6 +43,13 @@ pub fn run() {
         let data_dir = app.path().app_data_dir()?;
         let sync_state = app.state::<sync_server::SyncServerState>().inner().clone();
         sync_server::start(sync_state, data_dir);
+      }
+      #[cfg(target_os = "windows")]
+      {
+        let main_window = app
+          .get_webview_window("main")
+          .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "main window not found"))?;
+        windows_snap::install(&main_window)?;
       }
       if cfg!(debug_assertions) {
         app.handle().plugin(
