@@ -51,7 +51,7 @@ unsafe extern "system" fn folio_window_subclass(
         GetDpiForWindow(hwnd),
       )
     {
-      return LRESULT(HTMAXBUTTON.0 as isize);
+      return LRESULT(HTMAXBUTTON as isize);
     }
   }
 

@@ -5259,9 +5259,9 @@ small {
 .settings-container[data-active-section="branding"] [data-settings-section="branding"] { display: flex !important; }
 .settings-container[data-active-section="team"] .users-panel { display: block !important; }
 .settings-container[data-active-section="team"] .settings-support-grid { display: grid !important; }
-.settings-container[data-active-section="devices"] .sync-pairing-panel,
-.settings-container[data-active-section="about"] .settings-update-panel,
-.settings-container[data-active-section="danger"] .settings-danger-panel { display: flex !important; }
+.settings-container[data-active-section="devices"] [data-settings-section="devices"],
+.settings-container[data-active-section="about"] [data-settings-section="about"],
+.settings-container[data-active-section="danger"] [data-settings-section="danger"] { display: flex !important; }
 .folio-dialog-backdrop {
   position: fixed;
   inset: 0;
