@@ -6,25 +6,30 @@ on:
     branches:
       - main
       - "codex/**"
+    paths:
+      - "mobile/folio_mobile/**"
+      - ".github/workflows/android.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: folio-android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-android:
-    name: Android ARM64 debug APK
+    name: Flutter Android release APKs
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: mobile/folio_mobile
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -32,32 +37,28 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Android NDK
-        uses: nttld/setup-ndk@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          ndk-version: r26d
-          add-to-path: true
+          channel: stable
+          cache: true
 
-      - name: Install Rust with Android targets
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android
+      - name: Install locked Flutter dependencies
+        run: flutter pub get --enforce-lockfile
 
-      - name: Install locked frontend dependencies
-        run: npm ci
+      - name: Analyze Flutter source
+        run: flutter analyze
 
-      - name: Initialize Android project
-        run: npm run android:init -- --ci
+      - name: Run Flutter tests
+        run: flutter test
 
-      - name: Match Android system bars to Folio
-        run: npm run android:patch
+      - name: Build optimized APKs
+        run: flutter build apk --release --split-per-abi
 
-      - name: Build Android debug APK
-        run: npm run android:build -- --debug --target aarch64 --split-per-abi
-
-      - name: Upload Android APK
+      - name: Upload Android APKs
         uses: actions/upload-artifact@v6
         with:
-          name: folio-android-debug
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          name: folio-android-release-apks
+          path: mobile/folio_mobile/build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
+          retention-days: 14
