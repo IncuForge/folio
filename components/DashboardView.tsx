@@ -92,7 +92,7 @@ export default function DashboardView() {
               <span className="stat-box-icon-alert-text" style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--danger-text)" }}>{currencySymbol}</span>
             )}
           </div>
-          <h2 className="stat-box-value text-red-500">
+          <h2 className="stat-box-value stat-box-value-alert">
             {overdueOrders.length}
           </h2>
         </div>
@@ -104,7 +104,7 @@ export default function DashboardView() {
             </span>
             <AlertTriangle size={18} className="stat-box-icon-warning" />
           </div>
-          <h2 className="stat-box-value text-orange-500">
+          <h2 className="stat-box-value stat-box-value-warning">
             {urgentOrders.length}
           </h2>
         </div>

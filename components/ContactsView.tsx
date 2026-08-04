@@ -2,17 +2,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Trash2, Users } from "lucide-react";
 import { useDialogFocus } from "./useDialogFocus";
+import { useAppContext } from "@/lib/AppContext";
 
 type Contact={id:string;name:string;phone:string;email:string;address:string;preferences:string;allergens:string[];notes:string};
 const empty={name:"",phone:"",email:"",address:"",preferences:"",allergens:"",notes:""};
 export default function ContactsView(){
  const [contacts,setContacts]=useState<Contact[]>([]),[query,setQuery]=useState(""),[editing,setEditing]=useState<Contact|null>(null),[form,setForm]=useState(empty),[open,setOpen]=useState(false);
+ const { confirmAction }=useAppContext();
  const dialogRef=useDialogFocus<HTMLFormElement>(open,()=>setOpen(false));
  const load=async()=>{const r=await fetch("/api/contacts");if(r.ok)setContacts(await r.json())}; useEffect(()=>{void load()},[]);
  const visible=useMemo(()=>contacts.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(query.toLowerCase())),[contacts,query]);
  const begin=(contact?:Contact)=>{setEditing(contact||null);setForm(contact?{...contact,allergens:contact.allergens.join(", ")} : empty);setOpen(true)};
  const save=async(e:React.FormEvent)=>{e.preventDefault();const body={...form,allergens:form.allergens.split(",").map(v=>v.trim()).filter(Boolean)};const r=await fetch(editing?`/api/contacts/${editing.id}`:"/api/contacts",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(r.ok){setOpen(false);await load()}};
- const remove=async(id:string)=>{if(!confirm("Delete this contact? You can undo this action for 30 seconds."))return;const r=await fetch(`/api/contacts/${id}`,{method:"DELETE"});if(r.ok)await load()};
+ const remove=async(id:string)=>{if(!(await confirmAction("This removes the customer record. Orders already linked to them keep their saved contact details.",{title:"Delete customer",tone:"danger",confirmLabel:"Delete customer"})))return;const r=await fetch(`/api/contacts/${id}`,{method:"DELETE"});if(r.ok)await load()};
  return <div className="view-shell"><div className="view-header"><div><h1>Customers & Contacts</h1><p>Keep client details, preferences, allergens, addresses, and event context together.</p></div><button className="btn btn-primary" onClick={()=>begin()}><Plus size={16}/> Add Contact</button></div>
  <div className="glass-card contacts-toolbar"><Search size={17}/><input className="form-input" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, phone, email, or address…"/></div>
  {visible.length?<div className="contacts-grid">{visible.map(c=><article className="glass-card contact-card" key={c.id}><div><h3>{c.name}</h3><p>{c.phone||"No phone"} · {c.email||"No email"}</p></div><dl><dt>Address</dt><dd>{c.address||"—"}</dd><dt>Preferences</dt><dd>{c.preferences||"—"}</dd><dt>Allergens</dt><dd>{c.allergens.length?c.allergens.join(", "):"None recorded"}</dd></dl><div className="contact-actions"><button className="btn btn-secondary" onClick={()=>begin(c)}>Edit</button><button className="btn btn-secondary" onClick={()=>remove(c.id)} aria-label={`Delete ${c.name}`}><Trash2 size={15}/></button></div></article>)}</div>:<div className="empty-state-box"><Users size={24}/><h3>No contacts yet</h3><p>Create a customer record or import contacts later.</p><button className="btn btn-primary" onClick={()=>begin()}>Add First Contact</button></div>}

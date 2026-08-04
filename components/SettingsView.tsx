@@ -487,12 +487,12 @@ export default function SettingsView() {
       </nav>
 
       {errorMsg && (
-        <div role="alert" className="p-3 bg-[var(--danger-bg)] text-[var(--danger-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-red-200 dark:border-red-900/40" style={{ marginBottom: "1.5rem" }}>
+        <div role="alert" className="folio-alert folio-alert-danger" style={{ marginBottom: "1.5rem" }}>
           ⚠️ {errorMsg}
         </div>
       )}
       {successMsg && (
-        <div role="status" aria-live="polite" className="p-3 bg-[var(--success-bg)] text-[var(--success-text)] text-xs font-semibold rounded-[var(--radius-sm)] border border-emerald-250" style={{ marginBottom: "1.5rem" }}>
+        <div role="status" aria-live="polite" className="folio-alert folio-alert-success" style={{ marginBottom: "1.5rem" }}>
           ✅ {successMsg}
         </div>
       )}
@@ -905,7 +905,7 @@ export default function SettingsView() {
 
             {/* Existing Users Table */}
             <div className="users-table-column table-scroll-wrapper">
-              <table className="data-table text-xs">
+              <table className="data-table">
                 <thead>
                   <tr className="table-head-row">
                     <th className="th-cell">Teammate Email</th>
@@ -921,8 +921,8 @@ export default function SettingsView() {
                     return (
                       <React.Fragment key={user.id}>
                         <tr className="table-body-row">
-                          <td className="td-cell font-semibold">
-                            {user.email} {isSelf && <span className="text-[10px] text-[var(--ink-muted)] font-normal">(You)</span>}
+                          <td className="td-cell" style={{ fontWeight: 600 }}>
+                            {user.email} {isSelf && <span className="session-role">(You)</span>}
                           </td>
                           <td className="td-cell">
                             <span className={`status-badge ${user.role === "admin" ? "status-confirmed" : "status-pending"}`}>

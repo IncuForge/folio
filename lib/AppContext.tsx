@@ -4,8 +4,20 @@ import { getCurrencySymbol, getDefaultPaymentMethods, resolveCurrencyCode } from
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Item, Package, Order, AdditionalCharge } from "@/types/schema";
+import FolioDialog, { type DialogRequest, type DialogTone } from "@/components/FolioDialog";
+
+export type ConfirmOptions = {
+  title?: string;
+  tone?: DialogTone;
+  confirmLabel?: string;
+  cancelLabel?: string;
+};
 
 interface AppContextType {
+  /** Ask the user to confirm an action. Resolves false on cancel or Escape. */
+  confirmAction: (message: string, options?: ConfirmOptions) => Promise<boolean>;
+  /** Tell the user something they cannot act on. Replaces window.alert. */
+  notify: (message: string, options?: Omit<ConfirmOptions, "cancelLabel">) => Promise<boolean>;
   currentUser: { id: string; email: string; role: string } | null;
   setCurrentUser: (user: { id: string; email: string; role: string } | null) => void;
   
@@ -390,7 +402,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this food item?")) return;
+    if (!(await confirmAction("Deleting this dish removes it from the Food Library. Orders that already include it keep their saved copy.", { title: "Delete dish", tone: "danger", confirmLabel: "Delete dish" }))) return;
     try {
       const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
       if (res.ok) fetchItems();
@@ -475,7 +487,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   };
 
   const handleDeletePackage = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this package template?")) return;
+    if (!(await confirmAction("Deleting this package kit removes it from the library. Orders already built from it keep their dishes.", { title: "Delete package kit", tone: "danger", confirmLabel: "Delete kit" }))) return;
     try {
       const res = await fetch(`/api/packages/${id}`, { method: "DELETE" });
       if (res.ok) fetchPackages();
@@ -572,7 +584,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
             message: errorData.message,
           });
         } else {
-          alert(errorData.error || "An error occurred");
+          await notify(errorData.error || "Something went wrong on the server. Try again, and check Settings if it keeps happening.", { title: "Could not save", tone: "danger" });
         }
       }
     } catch (e) {
@@ -612,12 +624,12 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     }));
   };
 
-  const handleAddOrderItem = (itemId: string) => {
+  const handleAddOrderItem = async (itemId: string) => {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
     if (!item.is_available) {
-      alert(`⚠️ Note: "${item.name}" is currently marked as out of season/unavailable. Make sure ingredients will be available on the event date.`);
+      await notify(`"${item.name}" is marked out of season. It has been added anyway. Check the ingredients will be available on the event date.`, { title: "Out of season", tone: "warning" });
     }
 
     setOrderForm((prev) => {
@@ -687,7 +699,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const handleSaveOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderForm.client_name || !orderForm.event_name || !orderForm.event_date) {
-      alert("Please fill in all required fields (Client Name, Event Name, Event Date).");
+      await notify("Add a client name, an event name, and an event date before saving.", { title: "Missing details", tone: "warning" });
       return;
     }
 
@@ -751,7 +763,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         setActiveTab("dashboard");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to save order");
+        await notify(err.error || "The order could not be saved. Check the required fields and try again.", { title: "Could not save order", tone: "danger" });
       }
     } catch (error) {
       console.error("Error saving order", error);
@@ -770,7 +782,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         fetchOrders();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to update order status");
+        await notify(err.error || "The status could not be updated. Try again in a moment.", { title: "Could not update status", tone: "danger" });
       }
     } catch (error) {
       console.error("Error updating order status", error);
@@ -787,7 +799,45 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
+  // One dialog for the whole product. Every surface routes through this so a
+  // destructive action never falls back to the browser's own chrome.
+  const [dialogRequest, setDialogRequest] = useState<DialogRequest | null>(null);
+  const dialogResolver = useRef<((accepted: boolean) => void) | null>(null);
+
+  const openDialog = useCallback((request: DialogRequest) => new Promise<boolean>((resolve) => {
+    // A second request while one is open resolves the first as declined.
+    dialogResolver.current?.(false);
+    dialogResolver.current = resolve;
+    setDialogRequest(request);
+  }), []);
+
+  const resolveDialog = useCallback((accepted: boolean) => {
+    dialogResolver.current?.(accepted);
+    dialogResolver.current = null;
+    setDialogRequest(null);
+  }, []);
+
+  const confirmAction = useCallback((message: string, options?: ConfirmOptions) => openDialog({
+    kind: "confirm",
+    message,
+    title: options?.title ?? "Confirm action",
+    tone: options?.tone ?? "warning",
+    confirmLabel: options?.confirmLabel ?? "Confirm",
+    cancelLabel: options?.cancelLabel ?? "Cancel",
+  }), [openDialog]);
+
+  const notify = useCallback((message: string, options?: Omit<ConfirmOptions, "cancelLabel">) => openDialog({
+    kind: "notice",
+    message,
+    title: options?.title ?? "Heads up",
+    tone: options?.tone ?? "default",
+    confirmLabel: options?.confirmLabel ?? "Got it",
+    cancelLabel: "",
+  }), [openDialog]);
+
   const contextValue = useMemo(() => ({
+    confirmAction,
+    notify,
     currentUser,
     setCurrentUser,
     items,
@@ -885,11 +935,14 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     cancellationLockModal,
     dashboardScheduleTab,
     currentMonth,
+    confirmAction,
+    notify,
   ]);
 
   return (
     <AppContext.Provider value={contextValue}>
       {children}
+      <FolioDialog request={dialogRequest} onResolve={resolveDialog} />
     </AppContext.Provider>
   );
 }

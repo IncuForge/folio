@@ -242,7 +242,7 @@ export default function ReportsView() {
           <h3 className="details-card-title">
             Event Performance Index
           </h3>
-          <div className="details-items-list text-sm">
+          <div className="details-items-list">
             <div className="details-row">
               <span className="details-label">Total Events Handled:</span>
               <strong className="details-value">{reportData.ordersCount}</strong>

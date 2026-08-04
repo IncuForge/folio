@@ -50,6 +50,7 @@ export default function ModalOverlays() {
     pdfBrandLogo,
     currencySymbol,
     paymentMethods,
+    confirmAction,
   } = useAppContext();
 
   const selectedOrderDialogRef = useDialogFocus<HTMLDivElement>(Boolean(selectedOrder), () => setSelectedOrder(null));
@@ -106,16 +107,16 @@ export default function ModalOverlays() {
     const details = parsePaymentNotes(notesString);
     if (details.isStructured) {
       return (
-        <div className="text-muted-color text-xs mt-1">
-          <div><span className="font-semibold text-[var(--ink)]">Cleared Date:</span> {details.date || "N/A"} &bull; <span className="font-semibold text-[var(--ink)]">Mode:</span> {details.mode}</div>
-          {details.comment && <div><span className="font-semibold text-[var(--ink)]">Ref / Notes:</span> {details.comment}</div>}
+        <div className="payment-detail-note">
+          <div><span className="payment-detail-key">Cleared Date:</span> {details.date || "N/A"} &bull; <span className="payment-detail-key">Mode:</span> {details.mode}</div>
+          {details.comment && <div><span className="payment-detail-key">Ref / Notes:</span> {details.comment}</div>}
         </div>
       );
     }
     return (
       notesString && (
-        <div className="text-muted-color text-xs mt-1">
-          <span className="font-semibold text-[var(--ink)]">Ref:</span> {notesString}
+        <div className="payment-detail-note">
+          <span className="payment-detail-key">Ref:</span> {notesString}
         </div>
       )
     );
@@ -161,7 +162,7 @@ export default function ModalOverlays() {
 
   const handleResetPayment = async (milestone: "booking" | "second" | "final") => {
     if (!selectedOrder) return;
-    if (!confirm("Are you sure you want to mark this milestone as Unpaid?")) return;
+    if (!(await confirmAction("This clears the recorded payment date, mode, and reference for this milestone.", { title: "Mark milestone unpaid", tone: "danger", confirmLabel: "Mark unpaid" }))) return;
     try {
       const res = await fetch(`/api/orders/${selectedOrder.id}`, {
         method: "PATCH",
@@ -664,34 +665,34 @@ export default function ModalOverlays() {
               <div className="billing-milestones-box">
                 {/* Milestone 1 */}
                 <div className="milestone-row border-bottom pb-3 mb-3">
-                  <div className="milestone-header-line flex-justify-between flex-align-center mb-1">
-                    <span className="milestone-title font-semibold">1st Payment (Deposit):</span>
+                  <div className="milestone-header-line flex-justify-between flex-align-center">
+                    <span className="milestone-title">1st Payment (Deposit):</span>
                     {selectedOrder.booking_paid ? (
-                      <span className="success-color flex-align-center-gap text-sm font-medium">
+                      <span className="success-color flex-align-center-gap">
                         <CheckCircle2 size={15} /> Paid ({currencySymbol}{selectedOrder.booking_amount})
                       </span>
                     ) : (
-                      <span className="danger-color flex-align-center-gap text-sm font-medium">
+                      <span className="danger-color flex-align-center-gap">
                         <XCircle size={15} /> Unpaid ({currencySymbol}{selectedOrder.booking_amount})
                       </span>
                     )}
                   </div>
                   
                   {editingMilestone === "booking" ? (
-                    <div className="milestone-edit-form border p-3 rounded bg-slate-50 mt-2">
+                    <div className="milestone-edit-form">
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Date</label>
+                        <label className="form-label">Payment Date</label>
                         <input 
                           type="date" 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payDate} 
                           onChange={(e) => setPayDate(e.target.value)} 
                         />
                       </div>
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Mode</label>
+                        <label className="form-label">Payment Mode</label>
                         <select 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payMode} 
                           onChange={(e) => setPayMode(e.target.value)}
                         >
@@ -707,11 +708,11 @@ export default function ModalOverlays() {
                         </select>
                       </div>
                       <div className="form-group mb-3">
-                        <label className="form-label text-xs">Reference (Tx ID, Cheque ID, Notes)</label>
+                        <label className="form-label">Reference (Tx ID, Cheque ID, Notes)</label>
                         <input 
                           type="text" 
                           placeholder="Enter reference info"
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payComment} 
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
@@ -734,7 +735,7 @@ export default function ModalOverlays() {
                       </div>
                     </div>
                   ) : selectedOrder.booking_paid ? (
-                    <div className="mt-1 flex-justify-between flex-align-start bg-slate-50 p-2.5 rounded">
+                    <div className="payment-note-box">
                       <div>
                         {renderPaymentNotes(selectedOrder.booking_payment_notes || "")}
                       </div>
@@ -762,7 +763,7 @@ export default function ModalOverlays() {
                       <div className="mt-2 text-right">
                         <button 
                           type="button" 
-                          className="btn btn-primary btn-xs py-1 px-3"
+                          className="btn btn-primary btn-xs"
                           onClick={() => startEditPayment("booking", selectedOrder.booking_payment_notes || "")}
                         >
                           Record Payment Details
@@ -774,34 +775,34 @@ export default function ModalOverlays() {
 
                 {/* Milestone 2 */}
                 <div className="milestone-row border-bottom pb-3 mb-3">
-                  <div className="milestone-header-line flex-justify-between flex-align-center mb-1">
-                    <span className="milestone-title font-semibold">2nd Payment (Midway):</span>
+                  <div className="milestone-header-line flex-justify-between flex-align-center">
+                    <span className="milestone-title">2nd Payment (Midway):</span>
                     {selectedOrder.second_paid ? (
-                      <span className="success-color flex-align-center-gap text-sm font-medium">
+                      <span className="success-color flex-align-center-gap">
                         <CheckCircle2 size={15} /> Paid ({currencySymbol}{selectedOrder.second_amount})
                       </span>
                     ) : (
-                      <span className="danger-color flex-align-center-gap text-sm font-medium">
+                      <span className="danger-color flex-align-center-gap">
                         <XCircle size={15} /> Unpaid ({currencySymbol}{selectedOrder.second_amount})
                       </span>
                     )}
                   </div>
                   
                   {editingMilestone === "second" ? (
-                    <div className="milestone-edit-form border p-3 rounded bg-slate-50 mt-2">
+                    <div className="milestone-edit-form">
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Date</label>
+                        <label className="form-label">Payment Date</label>
                         <input 
                           type="date" 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payDate} 
                           onChange={(e) => setPayDate(e.target.value)} 
                         />
                       </div>
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Mode</label>
+                        <label className="form-label">Payment Mode</label>
                         <select 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payMode} 
                           onChange={(e) => setPayMode(e.target.value)}
                         >
@@ -817,11 +818,11 @@ export default function ModalOverlays() {
                         </select>
                       </div>
                       <div className="form-group mb-3">
-                        <label className="form-label text-xs">Reference (Tx ID, Cheque ID, Notes)</label>
+                        <label className="form-label">Reference (Tx ID, Cheque ID, Notes)</label>
                         <input 
                           type="text" 
                           placeholder="Enter reference info"
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payComment} 
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
@@ -844,7 +845,7 @@ export default function ModalOverlays() {
                       </div>
                     </div>
                   ) : selectedOrder.second_paid ? (
-                    <div className="mt-1 flex-justify-between flex-align-start bg-slate-50 p-2.5 rounded">
+                    <div className="payment-note-box">
                       <div>
                         {renderPaymentNotes(selectedOrder.second_payment_notes || "")}
                       </div>
@@ -872,7 +873,7 @@ export default function ModalOverlays() {
                       <div className="mt-2 text-right">
                         <button 
                           type="button" 
-                          className="btn btn-primary btn-xs py-1 px-3"
+                          className="btn btn-primary btn-xs"
                           onClick={() => startEditPayment("second", selectedOrder.second_payment_notes || "")}
                         >
                           Record Payment Details
@@ -884,34 +885,34 @@ export default function ModalOverlays() {
 
                 {/* Milestone 3 */}
                 <div className="milestone-row pb-1">
-                  <div className="milestone-header-line flex-justify-between flex-align-center mb-1">
-                    <span className="milestone-title font-semibold">Final Settlement:</span>
+                  <div className="milestone-header-line flex-justify-between flex-align-center">
+                    <span className="milestone-title">Final Settlement:</span>
                     {selectedOrder.final_paid ? (
-                      <span className="success-color flex-align-center-gap text-sm font-medium">
+                      <span className="success-color flex-align-center-gap">
                         <CheckCircle2 size={15} /> Paid ({currencySymbol}{selectedOrder.final_amount})
                       </span>
                     ) : (
-                      <span className="danger-color flex-align-center-gap text-sm font-medium">
+                      <span className="danger-color flex-align-center-gap">
                         <XCircle size={15} /> Unpaid ({currencySymbol}{selectedOrder.final_amount})
                       </span>
                     )}
                   </div>
                   
                   {editingMilestone === "final" ? (
-                    <div className="milestone-edit-form border p-3 rounded bg-slate-50 mt-2">
+                    <div className="milestone-edit-form">
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Date</label>
+                        <label className="form-label">Payment Date</label>
                         <input 
                           type="date" 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payDate} 
                           onChange={(e) => setPayDate(e.target.value)} 
                         />
                       </div>
                       <div className="form-group mb-2">
-                        <label className="form-label text-xs">Payment Mode</label>
+                        <label className="form-label">Payment Mode</label>
                         <select 
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payMode} 
                           onChange={(e) => setPayMode(e.target.value)}
                         >
@@ -927,11 +928,11 @@ export default function ModalOverlays() {
                         </select>
                       </div>
                       <div className="form-group mb-3">
-                        <label className="form-label text-xs">Reference (Tx ID, Cheque ID, Notes)</label>
+                        <label className="form-label">Reference (Tx ID, Cheque ID, Notes)</label>
                         <input 
                           type="text" 
                           placeholder="Enter reference info"
-                          className="form-input text-sm py-1" 
+                          className="form-input" 
                           value={payComment} 
                           onChange={(e) => setPayComment(e.target.value)} 
                         />
@@ -954,7 +955,7 @@ export default function ModalOverlays() {
                       </div>
                     </div>
                   ) : selectedOrder.final_paid ? (
-                    <div className="mt-1 flex-justify-between flex-align-start bg-slate-50 p-2.5 rounded">
+                    <div className="payment-note-box">
                       <div>
                         {renderPaymentNotes(selectedOrder.final_payment_notes || "")}
                       </div>
@@ -982,7 +983,7 @@ export default function ModalOverlays() {
                       <div className="mt-2 text-right">
                         <button 
                           type="button" 
-                          className="btn btn-primary btn-xs py-1 px-3"
+                          className="btn btn-primary btn-xs"
                           onClick={() => startEditPayment("final", selectedOrder.final_payment_notes || "")}
                         >
                           Record Payment Details
@@ -1035,7 +1036,7 @@ export default function ModalOverlays() {
 
             {selectedOrder.notes && (
               <div className="modal-body-section">
-                <span className="form-label-section-header border-none mb-1">General Event Notes</span>
+                <span className="form-label-section-header">General Event Notes</span>
                 <p className="notes-content-box">
                   {selectedOrder.notes}
                 </p>

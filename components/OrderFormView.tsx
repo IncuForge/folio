@@ -15,7 +15,9 @@ export default function OrderFormView() {
     handleUpdateChargeLine,
     handleRemoveChargeLine,
     handleAddChargeLine,
-    currencySymbol
+    currencySymbol,
+    confirmAction,
+    notify
   } = useAppContext();
 
   // Search input per session
@@ -140,9 +142,9 @@ export default function OrderFormView() {
     }));
   };
 
-  const handleRemoveSession = (sessId: string) => {
+  const handleRemoveSession = async (sessId: string) => {
     if (orderForm.sessions && orderForm.sessions.length <= 1) {
-      alert("An event must have at least one session!");
+      await notify("An event needs at least one session. Add another before removing this one.", { title: "Cannot remove session", tone: "warning" });
       return;
     }
     setOrderForm((prev: any) => ({
@@ -262,7 +264,18 @@ export default function OrderFormView() {
     });
   };
 
-  const handleToggleSessionItem = (sessId: string, itemId: string) => {
+  const handleToggleSessionItem = async (sessId: string, itemId: string) => {
+    // The out-of-season warning is raised before the update, because a state
+    // updater must stay pure and cannot await a dialog.
+    const targetSession = (orderForm.sessions || []).find((s: any) => s.id === sessId);
+    const alreadySelected = (targetSession?.items || []).some((it: any) => it.itemId === itemId);
+    if (!alreadySelected) {
+      const item = items.find(i => i.id === itemId);
+      if (item && !item.is_available) {
+        await notify(`"${item.name}" is marked out of season. It has been added anyway.`, { title: "Out of season", tone: "warning" });
+      }
+    }
+
     setOrderForm((prev: any) => {
       const updated = (prev.sessions || []).map((s: any) => {
         if (s.id === sessId) {
@@ -271,10 +284,6 @@ export default function OrderFormView() {
           if (idx >= 0) {
             itemsList.splice(idx, 1);
           } else {
-            const item = items.find(i => i.id === itemId);
-            if (item && !item.is_available) {
-              alert(`⚠️ Note: "${item.name}" is currently marked as out of season/unavailable.`);
-            }
             itemsList.push({
               itemId,
               quantity: s.guest_count || 50,
@@ -462,10 +471,10 @@ export default function OrderFormView() {
                   required
                   value={orderForm.event_end_date || orderForm.event_date || ""}
                   min={orderForm.event_date}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const end = e.target.value;
                     if (end && end < orderForm.event_date) {
-                      alert("End date cannot be before start date!");
+                      await notify("The end date falls before the start date. Pick an end date on or after the start.", { title: "Check the dates", tone: "warning" });
                     } else {
                       setOrderForm({ ...orderForm, event_end_date: end });
                     }
@@ -830,7 +839,7 @@ export default function OrderFormView() {
               <select 
                 className="form-input" 
                 value={orderForm.status}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const nextStatus = e.target.value;
                   if (nextStatus === "cancelled" && orderForm.id) {
                     const eventDate = new Date(orderForm.event_date);
@@ -840,7 +849,7 @@ export default function OrderFormView() {
                     const diffTime = eventDate.getTime() - today.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     if (diffDays >= 0 && diffDays <= 3) {
-                       const confirmCancel = confirm(`⚠️ Warning: This event is in less than 3 days. Sourced ingredients might go to waste. Do you still want to set status to Cancelled?`);
+                       const confirmCancel = await confirmAction(`This event is less than 3 days away, so ingredients may already be sourced.`, { title: "Cancel this event", tone: "danger", confirmLabel: "Cancel event", cancelLabel: "Keep booking" });
                        if (!confirmCancel) return;
                     }
                   }
